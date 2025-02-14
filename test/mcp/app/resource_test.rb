@@ -10,7 +10,12 @@ module MCP
       end
 
       def test_register_and_list_resources
-        @app.register_resource("/test", name: "test_resource", description: "A test resource") { "test content" }
+        @app.register_resource("/test") do
+          name "test_resource"
+          description "A test resource"
+          call { "test content" }
+        end
+
         result = @app.list_resources
         resources = result[:resources]
 
@@ -23,7 +28,10 @@ module MCP
 
       def test_resources_pagination
         10.times do |i|
-          @app.register_resource("/test#{i}", name: "resource#{i}") { "content#{i}" }
+          @app.register_resource("/test#{i}") do
+            name "resource#{i}"
+            call { "content#{i}" }
+          end
         end
 
         # Test without page_size (should return all resources)
@@ -49,7 +57,11 @@ module MCP
       end
 
       def test_read_resource
-        @app.register_resource("/test", name: "test_resource") { "test content" }
+        @app.register_resource("/test") do
+          name "test_resource"
+          call { "test content" }
+        end
+
         result = @app.read_resource("/test")
 
         assert_equal "/test", result[:contents].first[:uri]
@@ -61,13 +73,25 @@ module MCP
 
       def test_invalid_resource_registration
         error = assert_raises(ArgumentError) { @app.register_resource(nil) }
-        assert_match(/missing keyword: :name/, error.message)
+        assert_match(/Resource URI cannot be nil or empty/, error.message)
 
         error = assert_raises(ArgumentError) { @app.register_resource("") }
-        assert_match(/missing keyword: :name/, error.message)
+        assert_match(/Resource URI cannot be nil or empty/, error.message)
 
-        error = assert_raises(ArgumentError) { @app.register_resource("/test", name: "test") }
-        assert_match(/Block must be provided/, error.message)
+        error = assert_raises(ArgumentError) do
+          @app.register_resource("/test") do
+            # nameとhandlerが設定されていない
+          end
+        end
+        assert_match(/Handler must be provided/, error.message)
+
+        error = assert_raises(ArgumentError) do
+          @app.register_resource("/test") do
+            call { "test" }
+            # nameが設定されていない
+          end
+        end
+        assert_match(/Name must be provided/, error.message)
       end
     end
   end

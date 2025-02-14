@@ -25,7 +25,12 @@ module MCP
       server = Server.new(name: "test_server")
       initialize_server(server)
 
-      server.resource("test_resource", name: "test_resource", description: "A test resource") { "test content" }
+      server.resource("test_resource") do
+        name "test_resource"
+        description "A test resource"
+        call { "test content" }
+      end
+
       resources = server.instance_variable_get(:@app).list_resources[:resources]
 
       assert_equal 1, resources.size
@@ -52,7 +57,11 @@ module MCP
       server = Server.new(name: "test_server")
       initialize_server(server)
 
-      server.resource("content", name: "content") { "test content" }
+      server.resource("content") do
+        name "content"
+        call { "test content" }
+      end
+
       result = server.instance_variable_get(:@app).read_resource("content").dig(:contents, 0, :text)
 
       assert_equal "test content", result
