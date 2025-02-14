@@ -23,8 +23,8 @@ module MCP
       @name = value
     end
 
-    def tool(name, description: "", input_schema: {}, &block)
-      @app.register_tool(name, description: description, input_schema: input_schema, &block)
+    def tool(name, &block)
+      @app.register_tool(name, &block)
     end
 
     def resource(uri, name:, mime_type: "text/plain", description: "", &block)
