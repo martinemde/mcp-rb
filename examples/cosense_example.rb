@@ -8,7 +8,7 @@ require_relative "../lib/mcp"
 project_name = ENV["COSENSE_PROJECT_NAME"] || "funwarioisii"
 cosense_sid = ENV["COSENSE_SID"]
 
-# Cosense APIクライアント
+# Cosense API Client
 module CosenseClient
   BASE_URL = "https://scrapbox.io/api"
   TIMEOUT = 5 # seconds
@@ -76,22 +76,23 @@ module CosenseClient
   end
 end
 
-# ここから本題
+# Start of main content
 
 name "cosense-mcp-server"
 
-# ページ一覧を取得してリソースとして登録
+# Get page list and register as resources
 cosense_resources = CosenseClient.list_pages(project_name, cosense_sid)
 
 if cosense_resources
-  # ページ参照時にアクセス
   cosense_resources[:pages].each do |page|
-    resource "cosense://#{page[:title]}",
-      name: page[:title],
-      description: "A text page: #{page[:title]}" do
-      page_data = CosenseClient.get_page(project_name, page[:title], cosense_sid)
-      readable_page = CosenseClient.to_readable_page(page_data)
-      readable_page[:description]
+    resource "cosense://#{page[:title]}" do
+      name page[:title]
+      description "A text page: #{page[:title]}"
+      call do
+        page_data = CosenseClient.get_page(project_name, page[:title], cosense_sid)
+        readable_page = CosenseClient.to_readable_page(page_data)
+        readable_page[:description]
+      end
     end
   end
 else

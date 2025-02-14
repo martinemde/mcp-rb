@@ -14,8 +14,9 @@ tool "greet" do
   end
 end
 
-resource "hello://world",
-  name: "Hello World",
-  description: "A simple hello world message" do
-  "Hello, World!"
+resource "hello://world" do
+  name "Hello World"
+  description "A simple hello world message"
+  mime_type "text/plain"
+  call { "Hello, World!" }
 end
