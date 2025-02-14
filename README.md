@@ -15,7 +15,7 @@ gem 'mcp-rb'
 Here's a simple example of how to create an MCP server:
 
 ```ruby
-require 'mcp-rb'
+require 'mcp'
 
 name "hello-world"
 
