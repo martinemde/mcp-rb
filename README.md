@@ -72,7 +72,7 @@ To release a new version:
 git add .
 git commit -m "Release vx.y.z"
 git tag vx.y.z
-git push origin main --tags
+git push --tags
 ```
 
 1. Build and push to RubyGems
