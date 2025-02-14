@@ -11,7 +11,7 @@ module MCP
 
       def test_tools_pagination
         10.times do |i|
-          @app.define_tool("tool#{i}") do
+          @app.register_tool("tool#{i}") do
             description "Tool #{i}"
             argument :value, String, required: true, description: "Value for tool #{i}"
 
@@ -34,8 +34,8 @@ module MCP
         assert_equal "tool9", result[:tools].last[:name]
       end
 
-      def test_define_tool
-        tool = @app.define_tool("greet") do
+      def test_register_tool
+        tool = @app.register_tool("greet") do
           description "Greet someone by name"
           argument :name, String, required: true, description: "Name to greet"
 
@@ -67,8 +67,8 @@ module MCP
         }, result)
       end
 
-      def test_define_tool_with_multiple_arguments
-        tool = @app.define_tool("format_greeting") do
+      def test_register_tool_with_multiple_arguments
+        tool = @app.register_tool("format_greeting") do
           description "Format a greeting with title and name"
           argument :title, String, required: true, description: "Title (Mr./Ms./Dr. etc.)"
           argument :first_name, String, required: true, description: "First name"
@@ -142,7 +142,7 @@ module MCP
 
       def test_tool_without_handler
         error = assert_raises(ArgumentError) do
-          @app.define_tool("invalid") do
+          @app.register_tool("invalid") do
             description "Invalid tool without handler"
           end
         end
@@ -151,7 +151,7 @@ module MCP
 
       def test_tool_with_invalid_name
         error = assert_raises(ArgumentError) do
-          @app.define_tool(nil) do
+          @app.register_tool(nil) do
             description "Invalid tool"
             call do |args|
               "test"
