@@ -96,7 +96,11 @@ module MCP
       initialize_server(server)
 
       # Register and call the tool
-      server.tool("echo") { |args| args.to_s }
+      server.tool("echo") do
+        description "Echo a message"
+        argument :message, String, required: true, description: "Message to echo"
+        call { |args| args[:message] }
+      end
 
       request = {
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
