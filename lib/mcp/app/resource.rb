@@ -3,14 +3,64 @@
 module MCP
   class App
     module Resource
-      def register_resource(uri, name:, mime_type: "text/plain", description: "", &block)
-        raise ArgumentError, "Resource name cannot be nil or empty" if uri.nil? || uri.empty?
-        raise ArgumentError, "Block must be provided" unless block_given?
+      def resources
+        @resources ||= {}
+      end
 
-        resources[uri] = {
-          uri:, name:, mime_type:, description:,
-          handler: block
-        }
+      class ResourceBuilder
+        attr_reader :uri, :name, :description, :mime_type, :handler
+
+        def initialize(uri)
+          raise ArgumentError, "Resource URI cannot be nil or empty" if uri.nil? || uri.empty?
+          @uri = uri
+          @name = ""
+          @description = ""
+          @mime_type = "text/plain"
+          @handler = nil
+        end
+
+        # standard:disable Lint/DuplicateMethods,Style/TrivialAccessors
+        def name(value)
+          @name = value
+        end
+        # standard:enable Lint/DuplicateMethods,Style/TrivialAccessors
+
+        # standard:disable Lint/DuplicateMethods,Style/TrivialAccessors
+        def description(text)
+          @description = text
+        end
+        # standard:enable Lint/DuplicateMethods,Style/TrivialAccessors
+
+        # standard:disable Lint/DuplicateMethods,Style/TrivialAccessors
+        def mime_type(value)
+          @mime_type = value
+        end
+        # standard:enable Lint/DuplicateMethods,Style/TrivialAccessors
+
+        def call(&block)
+          @handler = block
+        end
+
+        def to_resource_hash
+          raise ArgumentError, "Handler must be provided" unless @handler
+          raise ArgumentError, "Name must be provided" if @name.empty?
+
+          {
+            uri: @uri,
+            name: @name,
+            mime_type: @mime_type,
+            description: @description,
+            handler: @handler
+          }
+        end
+      end
+
+      def register_resource(uri, &block)
+        builder = ResourceBuilder.new(uri)
+        builder.instance_eval(&block)
+        resource_hash = builder.to_resource_hash
+        resources[uri] = resource_hash
+        resource_hash
       end
 
       def list_resources(cursor: nil, page_size: nil)
@@ -51,10 +101,6 @@ module MCP
       end
 
       private
-
-      def resources
-        @resources ||= {}
-      end
 
       def format_resource(resource)
         {
