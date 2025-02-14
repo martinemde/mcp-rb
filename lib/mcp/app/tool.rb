@@ -8,8 +8,7 @@ module MCP
       end
 
       class ToolBuilder
-        attr_reader :name, :arguments, :handler
-        attr_accessor :description
+        attr_reader :name, :description, :arguments, :handler
 
         def initialize(name)
           raise ArgumentError, "Tool name cannot be nil or empty" if name.nil? || name.empty?
@@ -19,6 +18,13 @@ module MCP
           @required_arguments = []
           @handler = nil
         end
+
+        # standard:disable Lint/DuplicateMethods
+        def description(text = nil)
+          return @description if text.nil?
+          @description = text
+        end
+        # standard:enable Lint/DuplicateMethods
 
         def argument(name, type, required: false, description: "")
           @arguments[name] = {
