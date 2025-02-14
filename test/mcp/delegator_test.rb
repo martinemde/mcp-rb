@@ -8,7 +8,12 @@ module MCP
       server = Server.new(name: "test_server")
       initialize_server(server)
 
-      server.tool("test_tool", description: "A test tool") { |args| args.to_s }
+      server.tool("test_tool") do
+        description "A test tool"
+        argument :value, String, required: true, description: "Test value"
+        call { |args| args[:value].to_s }
+      end
+
       tools = server.instance_variable_get(:@app).list_tools[:tools]
 
       assert_equal 1, tools.size
@@ -32,7 +37,12 @@ module MCP
       server = Server.new(name: "test_server")
       initialize_server(server)
 
-      server.tool("echo") { |args| args[:message] }
+      server.tool("echo") do
+        description "Echo a message"
+        argument :message, String, required: true, description: "Message to echo"
+        call { |args| args[:message] }
+      end
+
       result = server.instance_variable_get(:@app).call_tool("echo", message: "hello").dig(:content, 0, :text)
 
       assert_equal "hello", result
