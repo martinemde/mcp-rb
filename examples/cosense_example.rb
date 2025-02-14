@@ -99,8 +99,8 @@ else
 end
 
 # ツールの定義
-tool "get_page",
-  description: <<~DESC,
+tool "get_page" do
+  description <<~DESC
     Get a page from #{project_name} project on cosen.se
     In cosense, a page is a cosense-style document with a title and a description.
     Bracket Notation makes links between pages.
@@ -113,27 +113,15 @@ tool "get_page",
     A page may have links to other pages.
     Links are rendered at the bottom of the page.
   DESC
-  input_schema: {
-    type: :object,
-    properties: {
-      page_title: {
-        type: :string,
-        description: "Title of the page"
-      }
-    },
-    required: [:page_title]
-  } do |args|
-  page = CosenseClient.get_page(project_name, args[:page_title], cosense_sid)
-  raise "Page #{args[:page_title]} not found" unless page
 
-  readable_page = CosenseClient.to_readable_page(page)
+  argument :page_title, String, required: true, description: "Title of the page"
 
-  # ページの内容をリソースとしてキャッシュ
-  resource "cosense://#{page[:title]}",
-    name: page[:title],
-    description: "A text page: #{page[:title]}" do
+  call do |args|
+    page = CosenseClient.get_page(project_name, args[:page_title], cosense_sid)
+    raise "Page #{args[:page_title]} not found" unless page
+
+    readable_page = CosenseClient.to_readable_page(page)
+
     readable_page[:description]
   end
-
-  readable_page[:description]
 end
