@@ -3,16 +3,71 @@
 module MCP
   class App
     module Tool
-      def register_tool(name, description: "", input_schema: {}, &block)
-        raise ArgumentError, "Tool name cannot be nil or empty" if name.nil? || name.empty?
-        raise ArgumentError, "Block must be provided" unless block_given?
+      def tools
+        @tools ||= {}
+      end
 
-        tools[name] = {
-          name: name,
-          description: description,
-          input_schema: input_schema,
-          handler: block
-        }
+      class ToolBuilder
+        attr_reader :name, :description, :arguments, :handler
+
+        def initialize(name)
+          raise ArgumentError, "Tool name cannot be nil or empty" if name.nil? || name.empty?
+          @name = name
+          @description = ""
+          @arguments = {}
+          @required_arguments = []
+          @handler = nil
+        end
+
+        def description(text)
+          @description = text
+        end
+
+        def argument(name, type, required: false, description: "")
+          @arguments[name] = {
+            type: ruby_type_to_schema_type(type),
+            description: description
+          }
+          @required_arguments << name if required
+        end
+
+        def call(&block)
+          @handler = block if block_given?
+        end
+
+        def to_tool_hash
+          raise ArgumentError, "Handler must be provided" unless @handler
+          {
+            name: @name,
+            description: @description,
+            input_schema: {
+              type: :object,
+              properties: @arguments,
+              required: @required_arguments
+            },
+            handler: @handler
+          }
+        end
+
+        private
+
+        def ruby_type_to_schema_type(type)
+          case type.to_s
+          when "String" then :string
+          when "Integer" then :integer
+          when "Float" then :number
+          when "TrueClass", "FalseClass", "Boolean" then :boolean
+          else :object
+          end
+        end
+      end
+
+      def register_tool(name, &block)
+        builder = ToolBuilder.new(name)
+        builder.instance_eval(&block)
+        tool_hash = builder.to_tool_hash
+        tools[name] = tool_hash
+        tool_hash
       end
 
       def list_tools(cursor: nil, page_size: 10)
@@ -32,6 +87,7 @@ module MCP
         raise ArgumentError, "Tool not found: #{name}" unless tool
 
         begin
+          validate_arguments(tool[:input_schema], arguments)
           result = tool[:handler].call(arguments)
           {
             content: [
@@ -57,8 +113,14 @@ module MCP
 
       private
 
-      def tools
-        @tools ||= {}
+      def validate_arguments(schema, arguments)
+        return unless schema[:required]
+
+        schema[:required].each do |required_arg|
+          unless arguments.key?(required_arg)
+            raise ArgumentError, "missing keyword: :#{required_arg}"
+          end
+        end
       end
 
       def format_tool(tool)
