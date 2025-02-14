@@ -27,8 +27,8 @@ module MCP
       @app.register_tool(name, &block)
     end
 
-    def resource(uri, name:, mime_type: "text/plain", description: "", &block)
-      @app.register_resource(uri, name: name, mime_type: mime_type, description: description, &block)
+    def resource(uri, &block)
+      @app.register_resource(uri, &block)
     end
 
     def run
