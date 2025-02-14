@@ -5,22 +5,15 @@ require_relative "../lib/mcp"
 
 name "hello-world"
 
-tool "greet",
-  description: "Greet someone by name",
-  input_schema: {
-    type: :object,
-    properties: {
-      name: {
-        type: :string,
-        description: "Name to greet"
-      }
-    },
-    required: [:name]
-  } do |args|
-  "Hello, #{args[:name]}!"
+tool "greet" do
+  description "Greet someone by name"
+  argument :name, String, required: true, description: "Name to greet"
+
+  call do |args|
+    "Hello, #{args[:name]}!"
+  end
 end
 
-# リソースの定義
 resource "hello://world",
   name: "Hello World",
   description: "A simple hello world message" do
