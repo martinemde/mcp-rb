@@ -36,6 +36,23 @@ tool "greet" do
 end
 ```
 
+## Supported specifications
+
+Reference: [MCP 2024-11-05](https://spec.modelcontextprotocol.io/specification/2024-11-05/)
+
+- [Base Protocol](https://spec.modelcontextprotocol.io/specification/2024-11-05/basic/)
+  - ping
+  - stdio transport
+- [Server features](https://spec.modelcontextprotocol.io/specification/2024-11-05/server/)
+  - Resources
+    - resources/read
+    - resources/list
+  - Tools
+    - tools/list
+    - tools/call
+
+Any capabilities are not supported yet.
+
 ## Testing
 
 ```bash
