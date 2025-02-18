@@ -15,7 +15,7 @@ module MCPTest
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
         method: "initialize",
         params: {
-          protocolVersion: MCP::PROTOCOL_VERSION,
+          protocolVersion: MCP::Constants::PROTOCOL_VERSION,
           capabilities: {}
         },
         id: 1
