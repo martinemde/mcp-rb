@@ -7,6 +7,7 @@ module MCP
     def test_server_initialization
       server = Server.new(name: "test_server")
       assert_equal "test_server", server.name
+      assert_equal "0.1.0", server.version
       refute server.initialized
     end
 

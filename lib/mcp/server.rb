@@ -9,7 +9,7 @@ module MCP
     attr_writer :name, :version
     attr_reader :initialized
 
-    def initialize(name:, version: VERSION)
+    def initialize(name:, version: '0.1.0')
       @name = name
       @version = version
       @app = App.new
