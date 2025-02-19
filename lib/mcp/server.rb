@@ -6,7 +6,7 @@ require "uri"
 
 module MCP
   class Server
-    attr_accessor :name
+    attr_writer :name
     attr_reader :initialized
 
     def initialize(name:, version: VERSION)
@@ -17,7 +17,7 @@ module MCP
       @supported_protocol_versions = [PROTOCOL_VERSION]
     end
 
-    def name(value = nil) # standard:disable Lint/DuplicateMethods
+    def name(value = nil)
       return @name if value.nil?
 
       @name = value
