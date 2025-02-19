@@ -3,6 +3,7 @@
 require "json"
 require "English"
 require "uri"
+require_relative "constants"
 
 module MCP
   class Server
@@ -14,7 +15,7 @@ module MCP
       @version = version
       @app = App.new
       @initialized = false
-      @supported_protocol_versions = [PROTOCOL_VERSION]
+      @supported_protocol_versions = [Constants::PROTOCOL_VERSION]
     end
 
     def name(value = nil)
@@ -119,7 +120,7 @@ module MCP
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
         id: request[:id],
         result: {
-          protocolVersion: PROTOCOL_VERSION,
+          protocolVersion: Constants::PROTOCOL_VERSION,
           capabilities: {
             logging: {},
             prompts: {

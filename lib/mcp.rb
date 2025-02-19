@@ -8,6 +8,7 @@ require_relative "mcp/constants"
 require_relative "mcp/app"
 require_relative "mcp/server"
 require_relative "mcp/delegator"
+require_relative "mcp/client"
 
 module MCP
   class << self

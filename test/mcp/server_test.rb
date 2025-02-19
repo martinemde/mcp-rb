@@ -17,7 +17,7 @@ module MCP
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
         method: MCP::Constants::RequestMethods::INITIALIZE,
         params: {
-          protocolVersion: PROTOCOL_VERSION,
+          protocolVersion: MCP::Constants::PROTOCOL_VERSION,
           capabilities: {},
           clientInfo: {
             name: "test_client",
@@ -30,7 +30,7 @@ module MCP
       response = server.send(:handle_request, request)
       assert_equal MCP::Constants::JSON_RPC_VERSION, response[:jsonrpc]
       assert_equal 1, response[:id]
-      assert_equal PROTOCOL_VERSION, response[:result][:protocolVersion]
+      assert_equal MCP::Constants::PROTOCOL_VERSION, response[:result][:protocolVersion]
       assert_equal false, response[:result][:capabilities][:tools][:listChanged]
     end
 
@@ -61,7 +61,7 @@ module MCP
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
         method: MCP::Constants::RequestMethods::INITIALIZE,
         params: {
-          protocolVersion: PROTOCOL_VERSION,
+          protocolVersion: MCP::Constants::PROTOCOL_VERSION,
           capabilities: {}
         },
         id: 1
