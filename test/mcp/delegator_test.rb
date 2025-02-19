@@ -4,6 +4,16 @@ require_relative "../test_helper"
 
 module MCP
   class DelegatorTest < MCPTest::TestCase
+    def test_server_version
+      server = build_test_server
+      server.version "1.2.3"
+
+      assert_equal "1.2.3", server.version
+
+      initialize_response = initialize_server(server)
+      assert_equal "1.2.3", initialize_response[:result][:serverInfo][:version]
+    end
+
     def test_tool_registration
       server = Server.new(name: "test_server")
       initialize_server(server)

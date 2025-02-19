@@ -6,10 +6,10 @@ require "uri"
 
 module MCP
   class Server
-    attr_accessor :name
+    attr_writer :name, :version
     attr_reader :initialized
 
-    def initialize(name:, version: VERSION)
+    def initialize(name:, version: "0.1.0")
       @name = name
       @version = version
       @app = App.new
@@ -17,10 +17,16 @@ module MCP
       @supported_protocol_versions = [PROTOCOL_VERSION]
     end
 
-    def name(value = nil) # standard:disable Lint/DuplicateMethods
+    def name(value = nil)
       return @name if value.nil?
 
       @name = value
+    end
+
+    def version(value = nil)
+      return @version if value.nil?
+
+      @version = value
     end
 
     def tool(name, &block)
