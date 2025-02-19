@@ -24,7 +24,7 @@ module MCPTest
         },
         id: 1
       }
-      server.send(:handle_request, init_request)
+      initialize_response = server.send(:handle_request, init_request)
 
       init_notification = {
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
@@ -32,6 +32,8 @@ module MCPTest
         id: 2
       }
       server.send(:handle_request, init_notification)
+
+      initialize_response
     end
   end
 end
