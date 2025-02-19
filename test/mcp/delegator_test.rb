@@ -11,7 +11,7 @@ module MCP
       assert_equal "1.2.3", server.version
 
       initialize_response = initialize_server(server)
-      assert_equal '1.2.3', initialize_response[:result][:serverInfo][:version]
+      assert_equal "1.2.3", initialize_response[:result][:serverInfo][:version]
     end
 
     def test_tool_registration
