@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-02-19
+
+- Allow specifying the version via DSL keyword: https://github.com/funwarioisii/mcp-rb/pull/2
+- Add MCP Client: https://github.com/funwarioisii/mcp-rb/pull/3
+
+### Breaking Changes
+- `MCP::PROTOCOL_VERSION` is moved to `MCP::Constants::PROTOCOL_VERSION`
+  - https://github.com/funwarioisii/mcp-rb/pull/3/commits/caad65500935a8eebfe024dbd25de0d16868c44e
+
 ## [0.2.0] - 2025-02-14
 
 ### Breaking Changes
