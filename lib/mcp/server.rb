@@ -6,7 +6,7 @@ require "uri"
 
 module MCP
   class Server
-    attr_writer :name
+    attr_writer :name, :version
     attr_reader :initialized
 
     def initialize(name:, version: VERSION)
@@ -21,6 +21,12 @@ module MCP
       return @name if value.nil?
 
       @name = value
+    end
+
+    def version(value = nil)
+      return @version if value.nil?
+
+      @version = value
     end
 
     def tool(name, &block)
