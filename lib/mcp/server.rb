@@ -4,6 +4,7 @@ require "json"
 require "English"
 require "uri"
 require_relative "constants"
+require_relative "logger"
 
 module MCP
   class Server
@@ -28,6 +29,7 @@ module MCP
       return @version if value.nil?
 
       @version = value
+      @supported_protocol_versions << value
     end
 
     def tool(name, &block)
@@ -40,8 +42,11 @@ module MCP
 
     def run
       while (input = $stdin.gets)
+        Logger.log("Raw input: #{input.inspect}")
         process_input(input)
       end
+    rescue => e
+      Logger.log("Fatal error > #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
     end
 
     def list_tools
@@ -64,10 +69,12 @@ module MCP
 
     def process_input(line)
       request = JSON.parse(line, symbolize_names: true)
+      Logger.log("#{Time.now} > #{line}")
       response = handle_request(request)
       return unless response # 通知の場合はnilが返されるので、何も出力しない
 
       response_json = JSON.generate(response)
+      Logger.log("Output > #{response_json}")
       $stdout.puts(response_json)
       $stdout.flush
     rescue JSON::ParserError => e
@@ -77,6 +84,7 @@ module MCP
     end
 
     def handle_request(request)
+      Logger.log("Request > #{request}")
       allowed_methods = [
         Constants::RequestMethods::INITIALIZE,
         Constants::RequestMethods::INITIALIZED,
@@ -150,9 +158,12 @@ module MCP
     end
 
     def handle_list_tools(request)
+      Logger.log("TOOL LIST > #{request.inspect}")
       cursor = request.dig(:params, :cursor)
       result = @app.list_tools(cursor: cursor)
       success_response(request[:id], result)
+    rescue => e
+      Logger.log("Error: #{e.class} - #{e.message}")
     end
 
     def handle_call_tool(request)
