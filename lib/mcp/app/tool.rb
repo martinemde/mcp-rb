@@ -77,7 +77,7 @@ module MCP
         tool_values = tools.values
         start_index = cursor ? cursor.to_i : 0
         paginated = tool_values[start_index, page_size]
-        next_cursor = (start_index + page_size < tool_values.length) ? (start_index + page_size).to_s : ""
+        next_cursor = (start_index + page_size < tool_values.length) ? (start_index + page_size).to_s : nil
 
         {
           tools: paginated.map { |t| format_tool(t) },

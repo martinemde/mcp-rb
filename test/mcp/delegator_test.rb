@@ -48,6 +48,23 @@ module MCP
       assert_equal "A test resource", resources.first[:description]
     end
 
+    def test_resource_template_registration
+      server = Server.new(name: "test_server")
+      initialize_server(server)
+
+      server.resource_template("content://{test_variable}") do
+        name "test_template"
+        description "A test resource"
+        call { |args| "test content #{args[:test_variable]}" }
+      end
+
+      templates = server.instance_variable_get(:@app).list_resource_templates[:resourceTemplates]
+
+      assert_equal 1, templates.size
+      assert_equal "test_template", templates.first[:name]
+      assert_equal "A test resource", templates.first[:description]
+    end
+
     def test_tool_block_execution
       server = Server.new(name: "test_server")
       initialize_server(server)
@@ -77,6 +94,20 @@ module MCP
       assert_equal "test content", result
     end
 
+    def test_resource_template_block_execution
+      server = Server.new(name: "test_server")
+      initialize_server(server)
+
+      server.resource_template("content://{test_variable}") do
+        name "content"
+        call { |args| "test content #{args[:test_variable]}" }
+      end
+
+      result = server.instance_variable_get(:@app).read_resource("content://test").dig(:contents, 0, :text)
+
+      assert_equal "test content test", result
+    end
+
     def test_tool_registration_with_invalid_name
       server = Server.new(name: "test_server")
       initialize_server(server)
@@ -90,6 +121,13 @@ module MCP
       initialize_server(server)
 
       assert_raises(ArgumentError) { server.resource(nil) { "test" } }
+    end
+
+    def test_resource_template_registration_with_invalid_name
+      server = Server.new(name: "test_server")
+      initialize_server(server)
+
+      assert_raises(ArgumentError) { server.resource_template(nil) { "test" } }
     end
   end
 end
