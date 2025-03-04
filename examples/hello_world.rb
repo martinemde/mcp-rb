@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+
 require_relative "../lib/mcp"
 
 name "hello-world"
@@ -42,5 +43,5 @@ resource_template "users://{user_name}/posts/{post_id}" do
     user_name = args[:user_name]
     post_id = args[:post_id]
     "Hello #{user_name}! I see your post #{post_id}"
- end
+  end
 end

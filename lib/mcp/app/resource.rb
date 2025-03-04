@@ -69,11 +69,11 @@ module MCP
 
         if page_size.nil?
           paginated = values[start_index..]
-          next_cursor = ""
+          next_cursor = nil
         else
           paginated = values[start_index, page_size]
           has_next = start_index + page_size < values.length
-          next_cursor = has_next ? (start_index + page_size).to_s : ""
+          next_cursor = has_next ? (start_index + page_size).to_s : nil
         end
 
         {
@@ -84,11 +84,11 @@ module MCP
 
       def read_resource(uri)
         resource = resources[uri]
-        
+
         # If no direct match, check if it matches a template
         if resource.nil? && respond_to?(:find_matching_template)
           template, variable_values = find_matching_template(uri)
-          
+
           if template
             begin
               # Call the template handler with the extracted variables
@@ -105,7 +105,7 @@ module MCP
             end
           end
         end
-        
+
         # If we still don't have a resource, raise an error
         raise ArgumentError, "Resource not found: #{uri}" unless resource
 
