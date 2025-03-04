@@ -15,6 +15,6 @@ module MCP
       end
     end
 
-    delegate :name, :version, :resource, :tool
+    delegate :name, :version, :resource, :resource_template, :tool
   end
 end

@@ -28,6 +28,7 @@ module MCP
       return @version if value.nil?
 
       @version = value
+      @supported_protocol_versions << value
     end
 
     def tool(name, &block)
@@ -36,6 +37,10 @@ module MCP
 
     def resource(uri, &block)
       @app.register_resource(uri, &block)
+    end
+
+    def resource_template(uri_template, &block)
+      @app.register_resource_template(uri_template, &block)
     end
 
     def run
@@ -54,6 +59,10 @@ module MCP
 
     def list_resources
       @app.list_resources[:resources]
+    end
+
+    def list_resource_templates
+      @app.list_resource_templates[:resourceTemplates]
     end
 
     def read_resource(uri)
@@ -169,6 +178,12 @@ module MCP
     def handle_list_resources(request)
       cursor = request.dig(:params, :cursor)
       result = @app.list_resources(cursor:)
+      success_response(request[:id], result)
+    end
+
+    def handle_list_resources_templates(request)
+      cursor = request.dig(:params, :cursor)
+      result = @app.list_resource_templates(cursor:)
       success_response(request[:id], result)
     end
 
