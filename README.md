@@ -19,6 +19,8 @@ require 'mcp'
 
 name "hello-world"
 
+version "1.0.0"
+
 # Define a resource
 resource "hello://world" do
   name "Hello World"
@@ -54,6 +56,7 @@ Reference: [MCP 2024-11-05](https://spec.modelcontextprotocol.io/specification/2
   - Resources
     - resources/read
     - resources/list
+    - resources/templates/list
   - Tools
     - tools/list
     - tools/call
@@ -109,4 +112,3 @@ gem push mcp-rb-*.gem
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md)
-
