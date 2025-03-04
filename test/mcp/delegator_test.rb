@@ -52,10 +52,10 @@ module MCP
       server = Server.new(name: "test_server")
       initialize_server(server)
 
-      server.resource_template("test_template") do
+      server.resource_template("content://{test_variable}") do
         name "test_template"
         description "A test resource"
-        call { "test content" }
+        call { |args| "test content #{args[:test_variable]}" }
       end
 
       templates = server.instance_variable_get(:@app).list_resource_templates[:resourceTemplates]
@@ -100,9 +100,7 @@ module MCP
 
       server.resource_template("content://{test_variable}") do
         name "content"
-        call do |variables| 
-          "test content #{variables[:test_variable]}"
-        end
+        call { |args| "test content #{args[:test_variable]}" }
       end
 
       result = server.instance_variable_get(:@app).read_resource("content://test").dig(:contents, 0, :text)

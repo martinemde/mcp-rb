@@ -30,7 +30,7 @@ end
 resource_template "hello://{user_name}" do
   name "Hello User"
   description "A simple hello user message"
-  call { "Hello, #{args[:user_name]}!" }
+  call { |args| "Hello, #{args[:user_name]}!" }
 end
 
 # Define a tool
