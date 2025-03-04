@@ -21,4 +21,9 @@ echo '{"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "hello://
 
 # List resources templates request
 echo '{"jsonrpc": "2.0", "method": "resources/templates/list", "id": 6}'
+
+# Read resource template request
+echo '{"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "users://test"}, "id": 7 }'
+
+echo '{"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "users://test/posts/3"}, "id": 9}'
 } | ./examples/hello_world.rb 

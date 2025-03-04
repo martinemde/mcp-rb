@@ -84,6 +84,29 @@ module MCP
 
       def read_resource(uri)
         resource = resources[uri]
+        
+        # If no direct match, check if it matches a template
+        if resource.nil? && respond_to?(:find_matching_template)
+          template, variable_values = find_matching_template(uri)
+          
+          if template
+            begin
+              # Call the template handler with the extracted variables
+              content = template[:handler].call(variable_values)
+              return {
+                contents: [{
+                  uri: uri,
+                  mimeType: template[:mime_type],
+                  text: content
+                }]
+              }
+            rescue => e
+              raise ArgumentError, "Error reading resource from template: #{e.message}"
+            end
+          end
+        end
+        
+        # If we still don't have a resource, raise an error
         raise ArgumentError, "Resource not found: #{uri}" unless resource
 
         begin

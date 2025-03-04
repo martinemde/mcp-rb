@@ -26,6 +26,13 @@ resource "hello://world" do
   call { "Hello, World!" }
 end
 
+# Define a resource template
+resource_template "hello://{user_name}" do
+  name "Hello User"
+  description "A simple hello user message"
+  call { "Hello, #{args[:user_name]}!" }
+end
+
 # Define a tool
 tool "greet" do
   description "Greet someone by name"

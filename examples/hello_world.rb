@@ -22,13 +22,26 @@ resource "hello://world" do
   call { "Hello, World!" }
 end
 
-resource "channels://{channel_id}" do
-  name "Get a Channel"
-  description "Get the Gaggle channel by channel_id"
-  mime_type "text/plain"
-  call do |args|  
-    channel_id = args[:channel_id]
-    uri = URI("#{RAILS_APP_URL}/gaggle/channels/#{channel_id}")
-    HTTParty.get(uri, headers: { "Accept" => "application/json" })
+resource_template "users://{user_name}" do
+  name "Hello User"
+  description "Template for accessing user resources by name"
+  mime_type "application/json"
+  call do |args|
+    # The variables hash contains the extracted values from the URI
+    # For example, if URI is "hello://123", then variables = {"user_name" => "123"}
+    user_name = args[:user_name]
+    "Hello #{user_name}!"
   end
+end
+
+# Example with multiple variables
+resource_template "users://{user_name}/posts/{post_id}" do
+  name "User Post"
+  description "Template for accessing user posts by user name and post ID"
+  mime_type "application/json"
+  call do |args|
+    user_name = args[:user_name]
+    post_id = args[:post_id]
+    "Hello #{user_name}! I see your post #{post_id}"
+ end
 end
