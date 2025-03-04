@@ -70,7 +70,6 @@ module MCP
         # Creates a pattern for matching URIs against this template
         def to_pattern
           pattern_string = Regexp.escape(@uri_template).gsub(/\\\{[^}]+\\\}/) do |match|
-            match.gsub(/\\\{|\\\}/, "")
             "([^/]+)"
           end
           Regexp.new("^#{pattern_string}$")
