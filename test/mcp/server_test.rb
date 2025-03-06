@@ -134,8 +134,8 @@ module MCP
       response = server.send(:handle_request, request)
       assert_equal "2.0", response[:jsonrpc]
       assert_equal 2, response[:id]
-      assert response[:error]
-      assert_match(/Tool not found/, response[:error][:message])
+      assert response[:result][:isError]
+      assert_match(/Tool not found/, response[:result][:content].first[:text])
     end
 
     def test_handle_ping

@@ -137,7 +137,7 @@ module MCP
           first_name: "John",
           last_name: "Smith")
         assert result[:isError]
-        assert_match(/missing keyword: :title/, result[:content].first[:text])
+        assert_equal "Error: Missing keyword: :title", result.dig(:content, 0, :text)
       end
 
       def test_tool_without_handler
@@ -159,6 +159,185 @@ module MCP
           end
         end
         assert_match(/Tool name cannot be nil or empty/, error.message)
+      end
+
+      def test_tool_with_nested_object
+        tool = @app.register_tool("create_user") do
+          description "Create a user with details"
+          argument :user, required: true do
+            argument :username, String, required: true, description: "Username"
+            argument :email, String, required: true, description: "Email address"
+            argument :age, Integer, required: false, description: "Age"
+          end
+
+          call do |args|
+            user = args[:user]
+            raise "Missing username" unless user[:username]
+            raise "Missing email" unless user[:email]
+            age = user[:age] || "N/A"
+            "User created: #{user[:username]}, #{user[:email]}, #{age}"
+          end
+        end
+
+        # Test schema
+        assert_equal "create_user", tool[:name]
+        assert_equal "Create a user with details", tool[:description]
+        assert_equal(
+          {
+            type: :object,
+            properties: {
+              user: {
+                type: :object,
+                properties: {
+                  username: {type: :string, description: "Username"},
+                  email: {type: :string, description: "Email address"},
+                  age: {type: :integer, description: "Age"}
+                },
+                required: [:username, :email],
+                description: ""
+              }
+            },
+            required: [:user]
+          },
+          tool[:input_schema]
+        )
+
+        # Test with complete data
+        result = @app.call_tool("create_user", user: {username: "john", email: "john@example.com", age: 30})
+        assert_equal({
+          content: [{type: "text", text: "User created: john, john@example.com, 30"}],
+          isError: false
+        }, result)
+
+        # Test with only required fields
+        result = @app.call_tool("create_user", user: {username: "jane", email: "jane@example.com"})
+        assert_equal({
+          content: [{type: "text", text: "User created: jane, jane@example.com, N/A"}],
+          isError: false
+        }, result)
+
+        # Test without :user argument
+        result = @app.call_tool("create_user")
+        assert result[:isError]
+        assert_equal "Error: Missing keyword: :user", result.dig(:content, 0, :text)
+
+        # Test with :user missing required field
+        result = @app.call_tool("create_user", user: {email: "john@example.com"})
+        assert result[:isError]
+        assert_equal "Error: Missing username", result.dig(:content, 0, :text)
+      end
+
+      # Test for a tool with an array of simple types
+      def test_tool_with_array_argument
+        tool = @app.register_tool("sum_numbers") do
+          description "Sum an array of numbers"
+          argument :numbers, Array, items: Integer, description: "Array of numbers to sum"
+
+          call do |args|
+            args[:numbers].sum.to_s
+          end
+        end
+
+        # Test schema
+        assert_equal "sum_numbers", tool[:name]
+        assert_equal "Sum an array of numbers", tool[:description]
+        assert_equal(
+          {
+            type: :object,
+            properties: {
+              numbers: {
+                type: :array,
+                description: "Array of numbers to sum",
+                items: {type: :integer}
+              }
+            },
+            required: []
+          },
+          tool[:input_schema]
+        )
+
+        # Test with array of integers
+        result = @app.call_tool("sum_numbers", numbers: [1, 2, 3])
+        assert_equal({
+          content: [{type: "text", text: "6"}],
+          isError: false
+        }, result)
+
+        # Test with empty array
+        result = @app.call_tool("sum_numbers", numbers: [])
+        assert_equal({
+          content: [{type: "text", text: "0"}],
+          isError: false
+        }, result)
+
+        # Test with non-integer values
+        result = @app.call_tool("sum_numbers", numbers: [1, "two", 3])
+        assert result[:isError]
+        assert_match(/Error: String can't be coerced into Integer|no implicit conversion of String into Integer/, result.dig(:content, 0, :text))
+      end
+
+      # Test for a tool with an array of objects
+      def test_tool_with_array_of_objects
+        tool = @app.register_tool("list_users") do
+          description "List users with their details"
+          argument :users, Array do
+            argument :name, String, required: true, description: "User's name"
+            argument :age, Integer, required: true, description: "User's age"
+          end
+
+          call do |args|
+            users = args[:users]
+            users.each do |user|
+              raise "Missing name" unless user[:name]
+              raise "Missing age" unless user[:age]
+            end
+            users.map { |u| "#{u[:name]} (#{u[:age]})" }.join(", ")
+          end
+        end
+
+        # Test schema
+        assert_equal "list_users", tool[:name]
+        assert_equal "List users with their details", tool[:description]
+        assert_equal(
+          {
+            type: :object,
+            properties: {
+              users: {
+                type: :array,
+                description: "",
+                items: {
+                  type: :object,
+                  properties: {
+                    name: {type: :string, description: "User's name"},
+                    age: {type: :integer, description: "User's age"}
+                  },
+                  required: [:name, :age]
+                }
+              }
+            },
+            required: []
+          },
+          tool[:input_schema]
+        )
+
+        # Test with array of complete objects
+        result = @app.call_tool("list_users", users: [{name: "Alice", age: 30}, {name: "Bob", age: 25}])
+        assert_equal({
+          content: [{type: "text", text: "Alice (30), Bob (25)"}],
+          isError: false
+        }, result)
+
+        # Test with empty array
+        result = @app.call_tool("list_users", users: [])
+        assert_equal({
+          content: [{type: "text", text: ""}],
+          isError: false
+        }, result)
+
+        # Test with array where an object misses a required field
+        result = @app.call_tool("list_users", users: [{name: "Alice"}, {name: "Bob", age: 25}])
+        assert result[:isError]
+        assert_equal "Error: Missing age", result.dig(:content, 0, :text)
       end
     end
   end

@@ -34,7 +34,7 @@ module MCP
         assert_equal "/test/{param_1}", templates.first[:uriTemplate]
         assert_equal "test_resource template", templates.first[:name]
         assert_equal "A test resource template", templates.first[:description]
-        assert_equal nil, result[:nextCursor]
+        assert_nil result[:nextCursor]
       end
 
       def test_resource_templates_pagination
