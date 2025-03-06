@@ -161,7 +161,6 @@ module MCP
             end
           end
         else
-          # Simple type validation
           valid = case type
                   when :string then arg.is_a?(String)
                   when :integer then arg.is_a?(Integer)
@@ -176,7 +175,6 @@ module MCP
         errors
       end
 
-      # Updated to use the new validate method and raise all errors
       def validate_arguments(schema, args)
         errors = validate(schema, args, "")
         unless errors.empty?
