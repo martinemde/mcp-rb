@@ -129,8 +129,59 @@ module MCP
 
       private
 
+      def validate(schema, arg, path = "")
+        errors = []
+        type = schema[:type]
+
+        if type == :object
+          if !arg.is_a?(Hash)
+            errors << (path.empty? ? "Arguments must be a hash" : "Expected object for #{path}, got #{arg.class}")
+          else
+            schema[:required]&.each do |req|
+              unless arg.key?(req)
+                errors << (path.empty? ? "Missing required param :#{req}" : "Missing required param #{path}.#{req}")
+              end
+            end
+            schema[:properties].each do |key, subschema|
+              if arg.key?(key)
+                sub_path = path.empty? ? key : "#{path}.#{key}"
+                sub_errors = validate(subschema, arg[key], sub_path)
+                errors.concat(sub_errors)
+              end
+            end
+          end
+        elsif type == :array
+          if !arg.is_a?(Array)
+            errors << "Expected array for #{path}, got #{arg.class}"
+          else
+            arg.each_with_index do |item, index|
+              sub_path = "#{path}[#{index}]"
+              sub_errors = validate(schema[:items], item, sub_path)
+              errors.concat(sub_errors)
+            end
+          end
+        else
+          # Simple type validation
+          valid = case type
+                  when :string then arg.is_a?(String)
+                  when :integer then arg.is_a?(Integer)
+                  when :number then arg.is_a?(Float)
+                  when :boolean then arg.is_a?(TrueClass) || arg.is_a?(FalseClass)
+                  else false
+                  end
+          unless valid
+            errors << "Expected #{type} for #{path}, got #{arg.class}"
+          end
+        end
+        errors
+      end
+
+      # Updated to use the new validate method and raise all errors
       def validate_arguments(schema, args)
-        schema[:required]&.each { |req| raise ArgumentError, "Missing keyword: :#{req}" unless args.key?(req) }
+        errors = validate(schema, args, "")
+        unless errors.empty?
+          raise ArgumentError, "#{errors.join("\n")}"
+        end
       end
     end
   end

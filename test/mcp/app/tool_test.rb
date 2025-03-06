@@ -137,7 +137,7 @@ module MCP
           first_name: "John",
           last_name: "Smith")
         assert result[:isError]
-        assert_equal "Error: Missing keyword: :title", result.dig(:content, 0, :text)
+        assert_equal "Error: Missing required param :title", result.dig(:content, 0, :text)
       end
 
       def test_tool_without_handler
@@ -172,8 +172,6 @@ module MCP
 
           call do |args|
             user = args[:user]
-            raise "Missing username" unless user[:username]
-            raise "Missing email" unless user[:email]
             age = user[:age] || "N/A"
             "User created: #{user[:username]}, #{user[:email]}, #{age}"
           end
@@ -219,12 +217,12 @@ module MCP
         # Test without :user argument
         result = @app.call_tool("create_user")
         assert result[:isError]
-        assert_equal "Error: Missing keyword: :user", result.dig(:content, 0, :text)
+        assert_equal "Error: Missing required param :user", result.dig(:content, 0, :text)
 
         # Test with :user missing required field
         result = @app.call_tool("create_user", user: {email: "john@example.com"})
         assert result[:isError]
-        assert_equal "Error: Missing username", result.dig(:content, 0, :text)
+        assert_equal "Error: Missing required param user.username", result.dig(:content, 0, :text)
       end
 
       # Test for a tool with an array of simple types
@@ -273,7 +271,7 @@ module MCP
         # Test with non-integer values
         result = @app.call_tool("sum_numbers", numbers: [1, "two", 3])
         assert result[:isError]
-        assert_match(/Error: String can't be coerced into Integer|no implicit conversion of String into Integer/, result.dig(:content, 0, :text))
+        assert_equal "Error: Expected integer for numbers[1], got String", result.dig(:content, 0, :text)
       end
 
       # Test for a tool with an array of objects
@@ -337,7 +335,7 @@ module MCP
         # Test with array where an object misses a required field
         result = @app.call_tool("list_users", users: [{name: "Alice"}, {name: "Bob", age: 25}])
         assert result[:isError]
-        assert_equal "Error: Missing age", result.dig(:content, 0, :text)
+        assert_equal "Error: Missing required param users[0].age", result.dig(:content, 0, :text)
       end
     end
   end
