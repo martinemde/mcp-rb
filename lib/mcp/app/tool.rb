@@ -162,12 +162,12 @@ module MCP
           end
         else
           valid = case type
-                  when :string then arg.is_a?(String)
-                  when :integer then arg.is_a?(Integer)
-                  when :number then arg.is_a?(Float)
-                  when :boolean then arg.is_a?(TrueClass) || arg.is_a?(FalseClass)
-                  else false
-                  end
+          when :string then arg.is_a?(String)
+          when :integer then arg.is_a?(Integer)
+          when :number then arg.is_a?(Float)
+          when :boolean then arg.is_a?(TrueClass) || arg.is_a?(FalseClass)
+          else false
+          end
           unless valid
             errors << "Expected #{type} for #{path}, got #{arg.class}"
           end
@@ -178,7 +178,7 @@ module MCP
       def validate_arguments(schema, args)
         errors = validate(schema, args, "")
         unless errors.empty?
-          raise ArgumentError, "#{errors.join("\n")}"
+          raise ArgumentError, errors.join("\n").to_s
         end
       end
     end

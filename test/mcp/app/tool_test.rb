@@ -227,7 +227,7 @@ module MCP
 
       # Test for a tool with an array of simple types
       def test_tool_with_array_argument
-        tool = @app.register_tool("sum_numbers") do
+        @app.register_tool("sum_numbers") do
           description "Sum an array of numbers"
           argument :numbers, Array, items: Integer, description: "Array of numbers to sum"
 
@@ -237,10 +237,12 @@ module MCP
         end
 
         # Test schema
-        assert_equal "sum_numbers", tool[:name]
-        assert_equal "Sum an array of numbers", tool[:description]
-        assert_equal(
-          {
+        result = @app.list_tools
+        assert_equal 1, result[:tools].size
+        assert_equal({
+          name: "sum_numbers",
+          description: "Sum an array of numbers",
+          inputSchema: {
             type: :object,
             properties: {
               numbers: {
@@ -250,9 +252,8 @@ module MCP
               }
             },
             required: []
-          },
-          tool[:input_schema]
-        )
+          }
+        }, result[:tools].first)
 
         # Test with array of integers
         result = @app.call_tool("sum_numbers", numbers: [1, 2, 3])
@@ -276,7 +277,7 @@ module MCP
 
       # Test for a tool with an array of objects
       def test_tool_with_array_of_objects
-        tool = @app.register_tool("list_users") do
+        @app.register_tool("list_users") do
           description "List users with their details"
           argument :users, Array do
             argument :name, String, required: true, description: "User's name"
@@ -294,10 +295,12 @@ module MCP
         end
 
         # Test schema
-        assert_equal "list_users", tool[:name]
-        assert_equal "List users with their details", tool[:description]
-        assert_equal(
-          {
+        result = @app.list_tools
+        assert_equal 1, result[:tools].size
+        assert_equal({
+          name: "list_users",
+          description: "List users with their details",
+          inputSchema: {
             type: :object,
             properties: {
               users: {
@@ -314,9 +317,8 @@ module MCP
               }
             },
             required: []
-          },
-          tool[:input_schema]
-        )
+          }
+        }, result[:tools].first)
 
         # Test with array of complete objects
         result = @app.call_tool("list_users", users: [{name: "Alice", age: 30}, {name: "Bob", age: 25}])
