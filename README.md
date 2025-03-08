@@ -64,6 +64,7 @@ tool "group_greeting" do
     args[:people].map { |person| "Hello, #{person}!" }.join(", ")
   end
 end
+```
 
 ## Supported specifications
 
