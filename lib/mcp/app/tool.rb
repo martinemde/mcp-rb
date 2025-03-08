@@ -7,31 +7,83 @@ module MCP
         @tools ||= {}
       end
 
+      # Builds schemas for arguments, supporting simple types, nested objects, and arrays
+      class SchemaBuilder
+        def initialize
+          @schema = nil
+          @properties = {}
+          @required = []
+        end
+
+        def argument(name, type = nil, required: false, description: "", items: nil, &block)
+          if type == Array
+            if block_given?
+              sub_builder = SchemaBuilder.new
+              sub_builder.instance_eval(&block)
+              item_schema = sub_builder.to_schema
+            elsif items
+              item_schema = {type: ruby_type_to_schema_type(items)}
+            else
+              raise ArgumentError, "Must provide items or a block for array type"
+            end
+            @properties[name] = {type: :array, description: description, items: item_schema}
+          elsif block_given?
+            raise ArgumentError, "Type not allowed with block for objects" if type
+            sub_builder = SchemaBuilder.new
+            sub_builder.instance_eval(&block)
+            @properties[name] = sub_builder.to_schema.merge(description: description)
+          else
+            raise ArgumentError, "Type required for simple arguments" if type.nil?
+            @properties[name] = {type: ruby_type_to_schema_type(type), description: description}
+          end
+          @required << name if required
+        end
+
+        def type(t)
+          @schema = {type: ruby_type_to_schema_type(t)}
+        end
+
+        def to_schema
+          @schema || {type: :object, properties: @properties, required: @required}
+        end
+
+        private
+
+        def ruby_type_to_schema_type(type)
+          if type == String
+            :string
+          elsif type == Integer
+            :integer
+          elsif type == Float
+            :number
+          elsif type == TrueClass || type == FalseClass
+            :boolean
+          elsif type == Array
+            :array
+          else
+            raise ArgumentError, "Unsupported type: #{type}"
+          end
+        end
+      end
+
+      # Constructs tool definitions with enhanced schema support
       class ToolBuilder
-        attr_reader :name, :description, :arguments, :handler
+        attr_reader :name, :arguments, :handler
 
         def initialize(name)
           raise ArgumentError, "Tool name cannot be nil or empty" if name.nil? || name.empty?
           @name = name
           @description = ""
-          @arguments = {}
-          @required_arguments = []
+          @schema_builder = SchemaBuilder.new
           @handler = nil
         end
 
-        # standard:disable Lint/DuplicateMethods
         def description(text = nil)
-          return @description if text.nil?
-          @description = text
+          text ? @description = text : @description
         end
-        # standard:enable Lint/DuplicateMethods
 
-        def argument(name, type, required: false, description: "")
-          @arguments[name] = {
-            type: ruby_type_to_schema_type(type),
-            description: description
-          }
-          @required_arguments << name if required
+        def argument(*args, **kwargs, &block)
+          @schema_builder.argument(*args, **kwargs, &block)
         end
 
         def call(&block)
@@ -43,95 +95,91 @@ module MCP
           {
             name: @name,
             description: @description,
-            input_schema: {
-              type: :object,
-              properties: @arguments,
-              required: @required_arguments
-            },
+            input_schema: @schema_builder.to_schema,
             handler: @handler
           }
         end
-
-        private
-
-        def ruby_type_to_schema_type(type)
-          case type.to_s
-          when "String" then :string
-          when "Integer" then :integer
-          when "Float" then :number
-          when "TrueClass", "FalseClass", "Boolean" then :boolean
-          else :object
-          end
-        end
       end
 
+      # Registers a tool with the given name and block
       def register_tool(name, &block)
         builder = ToolBuilder.new(name)
         builder.instance_eval(&block)
-        tool_hash = builder.to_tool_hash
-        tools[name] = tool_hash
-        tool_hash
+        tools[name] = builder.to_tool_hash
       end
 
+      # Lists tools with pagination
       def list_tools(cursor: nil, page_size: 10)
-        tool_values = tools.values
-        start_index = cursor ? cursor.to_i : 0
-        paginated = tool_values[start_index, page_size]
-        next_cursor = (start_index + page_size < tool_values.length) ? (start_index + page_size).to_s : nil
-
-        {
-          tools: paginated.map { |t| format_tool(t) },
-          nextCursor: next_cursor
-        }
+        start = cursor ? cursor.to_i : 0
+        paginated = tools.values[start, page_size]
+        next_cursor = (start + page_size < tools.length) ? (start + page_size).to_s : nil
+        {tools: paginated.map { |t| {name: t[:name], description: t[:description], inputSchema: t[:input_schema]} }, nextCursor: next_cursor}
       end
 
-      def call_tool(name, **arguments)
+      # Calls a tool with the provided arguments
+      def call_tool(name, **args)
         tool = tools[name]
         raise ArgumentError, "Tool not found: #{name}" unless tool
 
-        begin
-          validate_arguments(tool[:input_schema], arguments)
-          result = tool[:handler].call(arguments)
-          {
-            content: [
-              {
-                type: "text",
-                text: result.to_s
-              }
-            ],
-            isError: false
-          }
-        rescue => e
-          {
-            content: [
-              {
-                type: "text",
-                text: "Error: #{e.message}"
-              }
-            ],
-            isError: true
-          }
-        end
+        validate_arguments(tool[:input_schema], args)
+        {content: [{type: "text", text: tool[:handler].call(args).to_s}], isError: false}
+      rescue => e
+        {content: [{type: "text", text: "Error: #{e.message}"}], isError: true}
       end
 
       private
 
-      def validate_arguments(schema, arguments)
-        return unless schema[:required]
+      def validate(schema, arg, path = "")
+        errors = []
+        type = schema[:type]
 
-        schema[:required].each do |required_arg|
-          unless arguments.key?(required_arg)
-            raise ArgumentError, "missing keyword: :#{required_arg}"
+        if type == :object
+          if !arg.is_a?(Hash)
+            errors << (path.empty? ? "Arguments must be a hash" : "Expected object for #{path}, got #{arg.class}")
+          else
+            schema[:required]&.each do |req|
+              unless arg.key?(req)
+                errors << (path.empty? ? "Missing required param :#{req}" : "Missing required param #{path}.#{req}")
+              end
+            end
+            schema[:properties].each do |key, subschema|
+              if arg.key?(key)
+                sub_path = path.empty? ? key : "#{path}.#{key}"
+                sub_errors = validate(subschema, arg[key], sub_path)
+                errors.concat(sub_errors)
+              end
+            end
+          end
+        elsif type == :array
+          if !arg.is_a?(Array)
+            errors << "Expected array for #{path}, got #{arg.class}"
+          else
+            arg.each_with_index do |item, index|
+              sub_path = "#{path}[#{index}]"
+              sub_errors = validate(schema[:items], item, sub_path)
+              errors.concat(sub_errors)
+            end
+          end
+        else
+          valid = case type
+          when :string then arg.is_a?(String)
+          when :integer then arg.is_a?(Integer)
+          when :number then arg.is_a?(Float)
+          when :boolean then arg.is_a?(TrueClass) || arg.is_a?(FalseClass)
+          else false
+          end
+          unless valid
+            errors << "Expected #{type} for #{path}, got #{arg.class}"
           end
         end
+        errors
       end
 
-      def format_tool(tool)
-        {
-          name: tool[:name],
-          description: tool[:description],
-          inputSchema: tool[:input_schema]
-        }
+      def validate_arguments(schema, args)
+        errors = validate(schema, args, "")
+        unless errors.empty?
+          raise ArgumentError, errors.join("\n").to_s
+        end
       end
     end
   end

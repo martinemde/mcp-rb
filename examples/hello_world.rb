@@ -15,6 +15,26 @@ tool "greet" do
   end
 end
 
+tool "nested_greet" do
+  description "Greet someone by First and Last Name"
+  argument :person, required: true, description: "Person to greet" do
+    argument :first_name, String, required: false, description: "First name"
+    argument :last_name, String, required: false, description: "Last name"
+  end
+
+  call do |args|
+    "Hello, First: #{args[:person][:first_name]} Last: #{args[:person][:last_name]}!"
+  end
+end
+
+tool "group_greeting" do
+  description "Greet multiple people"
+  argument :people, Array, required: true, items: String, description: "People to greet"
+  call do |args|
+    args[:people].map { |person| "Hello, #{person}!" }.join(", ")
+  end
+end
+
 resource "hello://world" do
   name "Hello World"
   description "A simple hello world message"
