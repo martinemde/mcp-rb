@@ -169,7 +169,11 @@ module MCP
       arguments = request.dig(:params, :arguments)
       begin
         result = @app.call_tool(name, **arguments.transform_keys(&:to_sym))
-        success_response(request[:id], result)
+        if result[:isError]
+          error_response(request[:id], Constants::ErrorCodes::INVALID_REQUEST, result[:content].first[:text])
+        else
+          success_response(request[:id], result)
+        end
       rescue ArgumentError => e
         error_response(request[:id], Constants::ErrorCodes::INVALID_REQUEST, e.message)
       end
