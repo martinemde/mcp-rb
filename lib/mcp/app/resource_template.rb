@@ -114,17 +114,17 @@ module MCP
 
         if page_size.nil?
           paginated = values[start_index..]
-          has_next = false
+          next_cursor = nil
         else
           paginated = values[start_index, page_size]
           has_next = start_index + page_size < values.length
+          next_cursor = has_next ? (start_index + page_size).to_s : nil
         end
 
-        result = {
-          resourceTemplates: paginated.map { |t| format_resource_template(t) }
-        }
-        result[:nextCursor] = (start_index + page_size).to_s if has_next
-        result
+        {
+          resourceTemplates: paginated.map { |t| format_resource_template(t) },
+          nextCursor: next_cursor
+        }.compact
       end
 
       private
