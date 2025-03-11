@@ -26,12 +26,14 @@ module MCP
         assert_equal 5, result[:tools].length
         assert_equal "tool0", result[:tools].first[:name]
         assert_equal "tool4", result[:tools].last[:name]
+        assert_equal "5", result[:nextCursor]
 
         # Second page
         result = @app.list_tools(page_size: 5, cursor: "5")
         assert_equal 5, result[:tools].length
         assert_equal "tool5", result[:tools].first[:name]
         assert_equal "tool9", result[:tools].last[:name]
+        refute result.has_key?(:nextCursor)
       end
 
       def test_register_tool

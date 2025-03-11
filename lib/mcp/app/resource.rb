@@ -69,17 +69,17 @@ module MCP
 
         if page_size.nil?
           paginated = values[start_index..]
-          next_cursor = nil
+          has_next = false
         else
           paginated = values[start_index, page_size]
           has_next = start_index + page_size < values.length
-          next_cursor = has_next ? (start_index + page_size).to_s : nil
         end
 
-        {
-          resources: paginated.map { |r| format_resource(r) },
-          nextCursor: next_cursor
+        result = {
+          resources: paginated.map { |r| format_resource(r) }
         }
+        result[:nextCursor] = (start_index + page_size).to_s if has_next
+        result
       end
 
       def read_resource(uri)
