@@ -49,7 +49,6 @@ module MCP
         result = @app.list_resource_templates
         templates = result[:resourceTemplates]
 
-
         assert_equal 10, templates.length
         assert_equal "/test0/{param_1}", templates.first[:uriTemplate]
         assert_equal "resource0", templates.first[:name]
