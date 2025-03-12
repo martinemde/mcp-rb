@@ -185,6 +185,27 @@ module MCP
       assert_equal expected, response[:result][:serverInfo]
     end
 
+    def test_supports_tools_without_list_changed
+      start_server
+
+      response = send_message(a_valid_initialize_request)
+
+      expected = { listChanged: false }
+      assert_equal expected, response[:result][:capabilities][:tools]
+    end
+
+    def test_supports_resources_without_sub_capabilities
+      start_server
+
+      response = send_message(a_valid_initialize_request)
+
+      expected = {
+        subscribe: false,
+        listChanged: false
+      }
+      assert_equal expected, response[:result][:capabilities][:resources]
+    end
+
     private
 
     # Assumed to be run inside a Fiber
