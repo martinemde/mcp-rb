@@ -173,6 +173,18 @@ module MCP
       assert @server.initialized?
     end
 
+    def test_responds_with_server_info_on_initialize
+      start_server(name: "special_test_server", version: "1.4.1")
+
+      response = send_message(a_valid_initialize_request)
+
+      expected = {
+        name: "special_test_server",
+        version: "1.4.1"
+      }
+      assert_equal expected, response[:result][:serverInfo]
+    end
+
     private
 
     # Assumed to be run inside a Fiber
@@ -244,7 +256,9 @@ module MCP
     end
 
     def next_pending_server_message
-      @transport_adapter.next_pending_server_message
+      result = @transport_adapter.next_pending_server_message
+      result = JSON.parse(result, symbolize_names: true) if result
+      result
     end
 
     def a_valid_initialize_request
