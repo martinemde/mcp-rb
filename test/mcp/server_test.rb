@@ -284,9 +284,9 @@ module MCP
 
     def a_valid_initialize_request
       json_rpc_message(
-        method: MCP::Constants::RequestMethods::INITIALIZE,
+        method: Constants::RequestMethods::INITIALIZE,
         params: {
-          protocolVersion: MCP::Constants::PROTOCOL_VERSION,
+          protocolVersion: Constants::PROTOCOL_VERSION,
           capabilities: {}
         }
       )
@@ -294,13 +294,13 @@ module MCP
 
     def a_valid_initialized_notification
       json_rpc_notification(
-        method: MCP::Constants::RequestMethods::INITIALIZED
+        method: Constants::RequestMethods::INITIALIZED
       )
     end
 
     def json_rpc_message(values)
       result = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
+        jsonrpc: Constants::JSON_RPC_VERSION,
         id: @next_id,
         **values
       }.to_json
@@ -312,7 +312,7 @@ module MCP
 
     def json_rpc_notification(values)
       {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
+        jsonrpc: Constants::JSON_RPC_VERSION,
         **values
       }.to_json
     end
