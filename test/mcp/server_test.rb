@@ -164,8 +164,16 @@ module MCP
 
     private
 
+    class MockTransportAdapter
+    end
+
     def build_server(name: "test_server", version: nil)
-      kwargs = {name: name, version: version}.compact
+      @transport_adapter = MockTransportAdapter.new
+      kwargs = {
+        name: name,
+        version: version,
+        transport_adapter: @transport_adapter
+      }.compact
       NewServer.new(**kwargs)
     end
   end

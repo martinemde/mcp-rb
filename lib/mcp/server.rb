@@ -229,5 +229,12 @@ module MCP
   end
 
   class NewServer < Server
+    def initialize(name:, version: "0.1.0", transport_adapter: nil)
+      @name = name
+      @version = version
+      @app = App.new
+      @initialized = false
+      @supported_protocol_versions = [Constants::PROTOCOL_VERSION]
+    end
   end
 end
