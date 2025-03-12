@@ -156,10 +156,10 @@ module MCP
 
   class NewServerTest < MCPTest::TestCase
     def test_basic_server_info
-      server = build_server(name: "special_test_server", version: "1.4.1")
+      prepare_server(name: "special_test_server", version: "1.4.1")
 
-      assert_equal "special_test_server", server.name
-      assert_equal "1.4.1", server.version
+      assert_equal "special_test_server", @server.name
+      assert_equal "1.4.1", @server.version
     end
 
     private
@@ -167,14 +167,14 @@ module MCP
     class MockTransportAdapter
     end
 
-    def build_server(name: "test_server", version: nil)
+    def prepare_server(name: "test_server", version: nil)
       @transport_adapter = MockTransportAdapter.new
       kwargs = {
         name: name,
         version: version,
         transport_adapter: @transport_adapter
       }.compact
-      NewServer.new(**kwargs)
+      @server = NewServer.new(**kwargs)
     end
   end
 end
