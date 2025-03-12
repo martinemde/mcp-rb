@@ -23,7 +23,7 @@ module MCP
         assert_equal "/test", resources.first[:uri]
         assert_equal "test_resource", resources.first[:name]
         assert_equal "A test resource", resources.first[:description]
-        assert_nil result[:nextCursor]
+        refute result.has_key?(:nextCursor)
       end
 
       def test_resources_pagination
@@ -39,7 +39,7 @@ module MCP
         assert_equal 10, result[:resources].length
         assert_equal "/test0", result[:resources].first[:uri]
         assert_equal "resource0", result[:resources].first[:name]
-        assert_nil result[:nextCursor]
+        refute result.has_key?(:nextCursor)
 
         # First page
         result = @app.list_resources(page_size: 5)
@@ -53,7 +53,7 @@ module MCP
         assert_equal 5, result[:resources].length
         assert_equal "/test5", result[:resources].first[:uri]
         assert_equal "resource5", result[:resources].first[:name]
-        assert_nil result[:nextCursor]
+        refute result.has_key?(:nextCursor)
       end
 
       def test_read_resource

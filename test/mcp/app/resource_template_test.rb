@@ -34,7 +34,7 @@ module MCP
         assert_equal "/test/{param_1}", templates.first[:uriTemplate]
         assert_equal "test_resource template", templates.first[:name]
         assert_equal "A test resource template", templates.first[:description]
-        assert_nil result[:nextCursor]
+        refute result.has_key?(:nextCursor)
       end
 
       def test_resource_templates_pagination
@@ -52,7 +52,7 @@ module MCP
         assert_equal 10, templates.length
         assert_equal "/test0/{param_1}", templates.first[:uriTemplate]
         assert_equal "resource0", templates.first[:name]
-        assert_nil result[:nextCursor]
+        refute result.has_key?(:nextCursor)
 
         # First page
         result = @app.list_resource_templates(page_size: 5)
@@ -66,7 +66,7 @@ module MCP
         assert_equal 5, result[:resourceTemplates].length
         assert_equal "/test5/{param_1}", result[:resourceTemplates].first[:uriTemplate]
         assert_equal "resource5", result[:resourceTemplates].first[:name]
-        assert_nil result[:nextCursor]
+        refute result.has_key?(:nextCursor)
       end
 
       def test_read_resource_template

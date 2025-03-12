@@ -124,7 +124,7 @@ module MCP
         {
           resourceTemplates: paginated.map { |t| format_resource_template(t) },
           nextCursor: next_cursor
-        }
+        }.compact
       end
 
       private

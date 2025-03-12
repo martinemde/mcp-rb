@@ -112,8 +112,9 @@ module MCP
       def list_tools(cursor: nil, page_size: 10)
         start = cursor ? cursor.to_i : 0
         paginated = tools.values[start, page_size]
+
         next_cursor = (start + page_size < tools.length) ? (start + page_size).to_s : nil
-        {tools: paginated.map { |t| {name: t[:name], description: t[:description], inputSchema: t[:input_schema]} }, nextCursor: next_cursor}
+        {tools: paginated.map { |t| {name: t[:name], description: t[:description], inputSchema: t[:input_schema]} }, nextCursor: next_cursor}.compact
       end
 
       # Calls a tool with the provided arguments

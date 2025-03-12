@@ -79,7 +79,7 @@ module MCP
         {
           resources: paginated.map { |r| format_resource(r) },
           nextCursor: next_cursor
-        }
+        }.compact
       end
 
       def read_resource(uri)
