@@ -153,4 +153,20 @@ module MCP
       assert_equal({}, response[:result])
     end
   end
+
+  class NewServerTest < MCPTest::TestCase
+    def test_basic_server_info
+      server = build_server(name: "special_test_server", version: "1.4.1")
+
+      assert_equal "special_test_server", server.name
+      assert_equal "1.4.1", server.version
+    end
+
+    private
+
+    def build_server(name: "test_server", version: nil)
+      kwargs = {name: name, version: version}.compact
+      NewServer.new(**kwargs)
+    end
+  end
 end

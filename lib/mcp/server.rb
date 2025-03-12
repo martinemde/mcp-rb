@@ -227,4 +227,7 @@ module MCP
       response
     end
   end
+
+  class NewServer < Server
+  end
 end
