@@ -235,6 +235,34 @@ module MCP
       @app = App.new
       @initialized = false
       @supported_protocol_versions = [Constants::PROTOCOL_VERSION]
+      @transport_adapter = transport_adapter
+    end
+
+    def initialized?
+      @initialized
+    end
+
+    def run
+      @transport_adapter.connect
+      loop do
+        next_message = @transport_adapter.read_next_message
+        process_input(next_message)
+      end
+    end
+
+    private
+
+    def process_input(line)
+      request = JSON.parse(line, symbolize_names: true)
+      response = handle_request(request)
+      return unless response # 通知の場合はnilが返されるので、何も出力しない
+
+      response_json = JSON.generate(response)
+      @transport_adapter.send_message(response_json)
+    rescue JSON::ParserError => e
+      error_response(nil, Constants::ErrorCodes::INVALID_REQUEST, "Invalid JSON: #{e.message}")
+    rescue => e
+      error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
     end
   end
 end

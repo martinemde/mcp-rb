@@ -162,9 +162,68 @@ module MCP
       assert_equal "1.4.1", @server.version
     end
 
+    def test_knows_if_initialized
+      start_server
+
+      refute @server.initialized?
+
+      send_message(a_valid_initialize_request)
+      send_message(a_valid_initialized_notification)
+
+      assert @server.initialized?
+    end
+
     private
 
+    # Assumed to be run inside a Fiber
     class MockTransportAdapter
+      def initialize
+        @connected = false
+        @pending_client_messages = []
+        @pending_server_messages = []
+      end
+
+      # Test helper methods
+
+      def <<(message)
+        @pending_client_messages << message
+      end
+
+      def next_pending_server_message
+        @pending_server_messages.shift
+      end
+
+      # TransportAdapter interface methods
+
+      def connect
+        @connected = true
+      end
+
+      def read_next_message
+        ensure_connected!
+
+        Fiber.yield until @pending_client_messages.any?
+
+        @pending_client_messages.shift
+      end
+
+      def send_message(message)
+        ensure_connected!
+
+        @pending_server_messages << message
+      end
+
+      private
+
+      def ensure_connected!
+        raise "Not connected" unless @connected
+      end
+    end
+
+    def start_server(...)
+      prepare_server(...)
+      @server_fiber = Fiber.new { @server.run }
+      @server_fiber.resume
     end
 
     def prepare_server(name: "test_server", version: nil)
@@ -175,6 +234,52 @@ module MCP
         transport_adapter: @transport_adapter
       }.compact
       @server = NewServer.new(**kwargs)
+      @next_id = 1
+    end
+
+    def send_message(message)
+      @transport_adapter << message
+      @server_fiber.resume
+      next_pending_server_message
+    end
+
+    def next_pending_server_message
+      @transport_adapter.next_pending_server_message
+    end
+
+    def a_valid_initialize_request
+      json_rpc_message(
+        method: MCP::Constants::RequestMethods::INITIALIZE,
+        params: {
+          protocolVersion: MCP::Constants::PROTOCOL_VERSION,
+          capabilities: {}
+        }
+      )
+    end
+
+    def a_valid_initialized_notification
+      json_rpc_notification(
+        method: MCP::Constants::RequestMethods::INITIALIZED
+      )
+    end
+
+    def json_rpc_message(values)
+      result = {
+        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
+        id: @next_id,
+        **values
+      }.to_json
+
+      @next_id += 1
+
+      result
+    end
+
+    def json_rpc_notification(values)
+      {
+        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
+        **values
+      }.to_json
     end
   end
 end
