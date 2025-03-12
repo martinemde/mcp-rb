@@ -233,16 +233,6 @@ module MCP
         @pending_server_messages = []
       end
 
-      # Test helper methods
-
-      def <<(message)
-        @pending_client_messages << message
-      end
-
-      def next_pending_server_message
-        @pending_server_messages.shift
-      end
-
       # TransportAdapter interface methods
 
       def connect
@@ -261,6 +251,16 @@ module MCP
         ensure_connected!
 
         @pending_server_messages << message
+      end
+
+      # Test helper methods
+
+      def <<(message)
+        @pending_client_messages << message
+      end
+
+      def next_pending_server_message
+        @pending_server_messages.shift
       end
 
       private
