@@ -116,7 +116,7 @@ module MCP
       unless @supported_protocol_versions.include?(client_version)
         return error_response(
           request[:id],
-          Constants::ErrorCodes::UNSUPPORTED_PROTOCOL_VERSION,
+          Constants::ErrorCodes::INVALID_PARAMS,
           "Unsupported protocol version",
           {
             supported: @supported_protocol_versions,

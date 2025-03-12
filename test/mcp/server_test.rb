@@ -206,6 +206,23 @@ module MCP
       assert_equal expected, response[:result][:capabilities][:resources]
     end
 
+    def test_unsupported_protocol_version
+      start_server
+
+      request = json_rpc_message(
+        method: Constants::RequestMethods::INITIALIZE,
+        params: {
+          protocolVersion: "1999-01-01",
+          capabilities: {}
+        },
+      )
+      response = send_message(request)
+
+      assert response[:error]
+      assert_equal Constants::ErrorCodes::INVALID_PARAMS, response[:error][:code]
+      assert_equal "Unsupported protocol version", response[:error][:message]
+    end
+
     private
 
     # Assumed to be run inside a Fiber
