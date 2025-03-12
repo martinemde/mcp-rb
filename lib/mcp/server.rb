@@ -246,7 +246,8 @@ module MCP
       @transport_adapter.connect
       loop do
         next_message = @transport_adapter.read_next_message
-        process_input(next_message)
+        response = process_input(next_message)
+        @transport_adapter.send_message(response) if response
       end
     end
 
@@ -257,8 +258,7 @@ module MCP
       response = handle_request(request)
       return unless response # 通知の場合はnilが返されるので、何も出力しない
 
-      response_json = JSON.generate(response)
-      @transport_adapter.send_message(response_json)
+      JSON.generate(response)
     rescue JSON::ParserError => e
       error_response(nil, Constants::ErrorCodes::INVALID_REQUEST, "Invalid JSON: #{e.message}")
     rescue => e
