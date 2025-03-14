@@ -57,8 +57,8 @@ module MCP
 
     def test_returns_nothing_on_initialized_notification
       start_server
-
       send_message a_valid_initialize_request
+
       response = send_message a_valid_initialized_notification
 
       assert_nil response
