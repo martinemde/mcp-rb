@@ -3,6 +3,7 @@
 module MCP
   class Server
     # Implementation of the stdio transport for the MCP server.
+    # @see ClientConnection
     class StdioClientConnection
       include ClientConnection
 
