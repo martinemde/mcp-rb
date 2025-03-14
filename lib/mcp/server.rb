@@ -48,6 +48,10 @@ module MCP
       @initialized
     end
 
+    # Serve a client via the given connection.
+    # This method will block while the client is connected.
+    # It's the caller's responsibility to create Threads or Fibers to handle multiple clients.
+    # @param client_connection [ClientConnection] The connection to the client.
     def serve(client_connection)
       loop do
         next_message = client_connection.read_next_message
