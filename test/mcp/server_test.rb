@@ -253,6 +253,16 @@ module MCP
       assert_server_has_stopped
     end
 
+    def test_non_json_message
+      start_server
+
+      response = send_message "not json"
+
+      assert response[:error]
+      assert_equal Constants::ErrorCodes::PARSE_ERROR, response[:error][:code]
+      assert_includes response[:error][:message], "Invalid JSON"
+    end
+
     private
 
     # Assumed to be run inside a Fiber

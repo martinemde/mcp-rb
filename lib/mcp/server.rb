@@ -253,7 +253,8 @@ module MCP
 
       JSON.generate(response)
     rescue JSON::ParserError => e
-      error_response(nil, Constants::ErrorCodes::INVALID_REQUEST, "Invalid JSON: #{e.message}")
+      response = error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
+      JSON.generate(response)
     rescue => e
       error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
     end
