@@ -248,6 +248,8 @@ module MCP
 
     # Assumed to be run inside a Fiber
     class MockClientConnection
+      include Server::ClientConnection
+
       def initialize
         @pending_client_messages = []
         @pending_server_messages = []
