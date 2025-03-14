@@ -229,25 +229,15 @@ module MCP
   end
 
   class NewServer < Server
-    def initialize(name:, version: "0.1.0", transport_adapter: nil)
-      @name = name
-      @version = version
-      @app = App.new
-      @initialized = false
-      @supported_protocol_versions = [Constants::PROTOCOL_VERSION]
-      @transport_adapter = transport_adapter
-    end
-
     def initialized?
       @initialized
     end
 
-    def run
-      @transport_adapter.connect
+    def serve(client_connection)
       loop do
-        next_message = @transport_adapter.read_next_message
+        next_message = client_connection.read_next_message
         response = process_input(next_message)
-        @transport_adapter.send_message(response) if response
+        client_connection.send_message(response) if response
       end
     end
 

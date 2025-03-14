@@ -247,35 +247,24 @@ module MCP
     private
 
     # Assumed to be run inside a Fiber
-    class MockTransportAdapter
+    class MockClientConnection
       def initialize
-        @connected = false
         @pending_client_messages = []
         @pending_server_messages = []
       end
 
-      # TransportAdapter interface methods
-
-      def connect
-        @connected = true
-      end
-
+      # ClientConnection interface methods
       def read_next_message
-        ensure_connected!
-
         Fiber.yield until @pending_client_messages.any?
 
         @pending_client_messages.shift
       end
 
       def send_message(message)
-        ensure_connected!
-
         @pending_server_messages << message
       end
 
       # Test helper methods
-
       def <<(message)
         @pending_client_messages << message
       end
@@ -283,38 +272,32 @@ module MCP
       def next_pending_server_message
         @pending_server_messages.shift
       end
-
-      private
-
-      def ensure_connected!
-        raise "Not connected" unless @connected
-      end
     end
 
     def start_server(...)
       prepare_server(...)
-      @server_fiber = Fiber.new { @server.run }
+
+      @mock_client_connection = MockClientConnection.new
+      @server_fiber = Fiber.new { @server.serve(@mock_client_connection) }
       @server_fiber.resume
     end
 
     def prepare_server(name: "test_server", version: nil)
-      @transport_adapter = MockTransportAdapter.new
       kwargs = {
         name: name,
-        version: version,
-        transport_adapter: @transport_adapter
+        version: version
       }.compact
       @server = NewServer.new(**kwargs)
     end
 
     def send_message(message)
-      @transport_adapter << message
+      @mock_client_connection << message
       @server_fiber.resume
       next_pending_server_message
     end
 
     def next_pending_server_message
-      result = @transport_adapter.next_pending_server_message
+      result = @mock_client_connection.next_pending_server_message
       result = JSON.parse(result, symbolize_names: true) if result
       result
     end
