@@ -54,7 +54,9 @@ module MCP
         break if next_message.nil? # Client closed the connection
 
         response = process_input(next_message)
-        client_connection.send_message(response) if response
+        next unless response # Notifications don't return a response so don't send anything
+
+        client_connection.send_message(response)
       end
     end
 
@@ -81,17 +83,17 @@ module MCP
     private
 
     def process_input(line)
-      request = JSON.parse(line, symbolize_names: true)
-      response = handle_request(request)
-      return unless response # 通知の場合はnilが返されるので、何も出力しない
+      result = begin
+                 request = JSON.parse(line, symbolize_names: true)
+                 handle_request(request)
+               rescue JSON::ParserError => e
+                 error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
+               rescue => e
+                 error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
+               end
 
-      JSON.generate(response)
-    rescue JSON::ParserError => e
-      response = error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
-      JSON.generate(response)
-    rescue => e
-      response = error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
-      JSON.generate(response)
+      result = JSON.generate(result) if result
+      result
     end
 
     def handle_request(request)
