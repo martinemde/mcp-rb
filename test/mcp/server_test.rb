@@ -55,7 +55,7 @@ module MCP
       assert_equal expected, response[:result][:capabilities][:resources]
     end
 
-    def test_unsupported_protocol_version
+    def test_does_not_allow_unsupported_protocol_version
       start_server
 
       request = json_rpc_message(
