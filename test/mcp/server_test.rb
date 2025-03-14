@@ -305,7 +305,6 @@ module MCP
         transport_adapter: @transport_adapter
       }.compact
       @server = NewServer.new(**kwargs)
-      @next_id = 1
     end
 
     def send_message(message)
@@ -347,6 +346,8 @@ module MCP
     end
 
     def json_rpc_message(values)
+      @next_id ||= 1
+
       result = {
         jsonrpc: Constants::JSON_RPC_VERSION,
         id: @next_id,
