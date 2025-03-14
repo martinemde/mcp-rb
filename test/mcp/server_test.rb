@@ -103,9 +103,8 @@ module MCP
     end
 
     def test_client_closing_connection
-      start_server
-      send_message a_valid_initialize_request
-      send_message a_valid_initialized_notification
+      start_initialized_server
+
       send_message nil
 
       assert_server_has_stopped
@@ -163,6 +162,12 @@ module MCP
       def next_pending_server_message
         @pending_server_messages.shift
       end
+    end
+
+    def start_initialized_server(...)
+      start_server(...)
+      send_message a_valid_initialize_request
+      send_message a_valid_initialized_notification
     end
 
     def start_server(...)
