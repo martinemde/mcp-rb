@@ -55,6 +55,15 @@ module MCP
       assert_equal expected, response[:result][:capabilities][:resources]
     end
 
+    def test_returns_nothing_on_initialized_notification
+      start_server
+
+      send_message a_valid_initialize_request
+      response = send_message a_valid_initialized_notification
+
+      assert_nil response
+    end
+
     def test_does_not_allow_unsupported_protocol_version
       start_server
 
