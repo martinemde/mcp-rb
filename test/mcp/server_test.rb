@@ -223,6 +223,27 @@ module MCP
       assert_equal "Unsupported protocol version", response[:error][:message]
     end
 
+    def test_does_not_allow_non_ping_requests_before_initialize
+      start_server
+
+      request = json_rpc_message(
+        method: Constants::RequestMethods::TOOLS_LIST
+      )
+      response = send_message(request)
+
+      assert response[:error]
+      assert_equal Constants::ErrorCodes::NOT_INITIALIZED, response[:error][:code]
+      assert_equal "Server not initialized", response[:error][:message]
+    end
+
+    def test_allows_ping_requests_before_initialize
+      start_server
+
+      response = send_message a_valid_ping_request
+
+      assert_successful_response response
+    end
+
     private
 
     # Assumed to be run inside a Fiber
@@ -313,6 +334,16 @@ module MCP
       json_rpc_notification(
         method: Constants::RequestMethods::INITIALIZED
       )
+    end
+
+    def a_valid_ping_request
+      json_rpc_message(
+        method: Constants::RequestMethods::PING
+      )
+    end
+
+    def assert_successful_response(response)
+      assert response[:result]
     end
 
     def json_rpc_message(values)
