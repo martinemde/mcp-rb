@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 
 module MCP
-  class NewServerTest < MCPTest::TestCase
+  class ServerTest < MCPTest::TestCase
     def test_basic_server_info
       prepare_server(name: "special_test_server", version: "1.4.1")
 
@@ -39,7 +39,7 @@ module MCP
 
       response = send_message(a_valid_initialize_request)
 
-      expected = { listChanged: false }
+      expected = {listChanged: false}
       assert_equal expected, response[:result][:capabilities][:tools]
     end
 
@@ -63,7 +63,7 @@ module MCP
         params: {
           protocolVersion: "1999-01-01",
           capabilities: {}
-        },
+        }
       )
       response = send_message(request)
 
@@ -157,7 +157,7 @@ module MCP
         name: name,
         version: version
       }.compact
-      @server = NewServer.new(**kwargs)
+      @server = Server.new(**kwargs)
     end
 
     def send_message(message)

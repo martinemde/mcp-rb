@@ -10,7 +10,6 @@ require_relative "server/stdio_client_connection"
 module MCP
   class Server
     attr_writer :name, :version
-    attr_reader :initialized
 
     def initialize(name:, version: "0.1.0")
       @name = name
@@ -45,9 +44,17 @@ module MCP
       @app.register_resource_template(uri_template, &block)
     end
 
-    def run
-      while (input = $stdin.gets)
-        process_input(input)
+    def initialized?
+      @initialized
+    end
+
+    def serve(client_connection)
+      loop do
+        next_message = client_connection.read_next_message
+        break if next_message.nil? # Client closed the connection
+
+        response = process_input(next_message)
+        client_connection.send_message(response) if response
       end
     end
 
@@ -78,11 +85,10 @@ module MCP
       response = handle_request(request)
       return unless response # 通知の場合はnilが返されるので、何も出力しない
 
-      response_json = JSON.generate(response)
-      $stdout.puts(response_json)
-      $stdout.flush
+      JSON.generate(response)
     rescue JSON::ParserError => e
-      error_response(nil, Constants::ErrorCodes::INVALID_REQUEST, "Invalid JSON: #{e.message}")
+      response = error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
+      JSON.generate(response)
     rescue => e
       error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
     end
@@ -227,37 +233,6 @@ module MCP
       }
       response[:error][:data] = data if data
       response
-    end
-  end
-
-  class NewServer < Server
-    def initialized?
-      @initialized
-    end
-
-    def serve(client_connection)
-      loop do
-        next_message = client_connection.read_next_message
-        break if next_message.nil? # Client closed the connection
-
-        response = process_input(next_message)
-        client_connection.send_message(response) if response
-      end
-    end
-
-    private
-
-    def process_input(line)
-      request = JSON.parse(line, symbolize_names: true)
-      response = handle_request(request)
-      return unless response # 通知の場合はnilが返されるので、何も出力しない
-
-      JSON.generate(response)
-    rescue JSON::ParserError => e
-      response = error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
-      JSON.generate(response)
-    rescue => e
-      error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
     end
   end
 end
