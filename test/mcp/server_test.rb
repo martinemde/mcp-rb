@@ -112,6 +112,18 @@ module MCP
       assert_includes response[:error][:message], "Invalid JSON"
     end
 
+    def test_reports_internal_errors
+      start_server
+
+      @server.stub(:handle_request, proc { raise "Something went wrong" }) do
+        response = send_message a_valid_ping_request
+
+        assert response[:error]
+        assert_equal Constants::ErrorCodes::INTERNAL_ERROR, response[:error][:code]
+        assert_includes response[:error][:message], "Something went wrong"
+      end
+    end
+
     private
 
     # Assumed to be run inside a Fiber
