@@ -84,13 +84,13 @@ module MCP
 
     def process_input(line)
       result = begin
-                 request = JSON.parse(line, symbolize_names: true)
-                 handle_request(request)
-               rescue JSON::ParserError => e
-                 error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
-               rescue => e
-                 error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
-               end
+        request = JSON.parse(line, symbolize_names: true)
+        handle_request(request)
+      rescue JSON::ParserError => e
+        error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
+      rescue => e
+        error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
+      end
 
       result = JSON.generate(result) if result
       result
