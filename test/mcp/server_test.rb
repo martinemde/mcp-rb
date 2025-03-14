@@ -244,6 +244,15 @@ module MCP
       assert_successful_response response
     end
 
+    def test_client_closing_connection
+      start_server
+      send_message a_valid_initialize_request
+      send_message a_valid_initialized_notification
+      send_message nil
+
+      assert_server_has_stopped
+    end
+
     private
 
     # Assumed to be run inside a Fiber
@@ -257,7 +266,7 @@ module MCP
 
       # ClientConnection interface methods
       def read_next_message
-        Fiber.yield until @pending_client_messages.any?
+        Fiber.yield while @pending_client_messages.empty?
 
         @pending_client_messages.shift
       end
@@ -328,6 +337,10 @@ module MCP
 
     def assert_successful_response(response)
       assert response[:result]
+    end
+
+    def assert_server_has_stopped
+      refute_predicate @server_fiber, :alive?
     end
 
     def json_rpc_message(values)

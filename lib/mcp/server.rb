@@ -237,6 +237,8 @@ module MCP
     def serve(client_connection)
       loop do
         next_message = client_connection.read_next_message
+        break if next_message.nil? # Client closed the connection
+
         response = process_input(next_message)
         client_connection.send_message(response) if response
       end
