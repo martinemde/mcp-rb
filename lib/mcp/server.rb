@@ -5,6 +5,7 @@ require "English"
 require "uri"
 require_relative "constants"
 require_relative "server/client_connection"
+require_relative "server/stdio_client_connection"
 
 module MCP
   class Server
