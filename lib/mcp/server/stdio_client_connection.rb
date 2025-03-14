@@ -12,6 +12,7 @@ module MCP
       end
 
       def read_next_message
+        # gets will return nil if the client closes the connection
         $stdin.gets&.chomp
       end
 
