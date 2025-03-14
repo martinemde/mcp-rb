@@ -16,8 +16,8 @@ module MCP
 
       refute @server.initialized?
 
-      send_message(a_valid_initialize_request)
-      send_message(a_valid_initialized_notification)
+      send_message a_valid_initialize_request
+      send_message a_valid_initialized_notification
 
       assert @server.initialized?
     end
@@ -25,7 +25,7 @@ module MCP
     def test_responds_with_server_info_on_initialize
       start_server(name: "special_test_server", version: "1.4.1")
 
-      response = send_message(a_valid_initialize_request)
+      response = send_message a_valid_initialize_request
 
       expected = {
         name: "special_test_server",
@@ -37,7 +37,7 @@ module MCP
     def test_supports_tools_without_list_changed
       start_server
 
-      response = send_message(a_valid_initialize_request)
+      response = send_message a_valid_initialize_request
 
       expected = {listChanged: false}
       assert_equal expected, response[:result][:capabilities][:tools]
@@ -46,7 +46,7 @@ module MCP
     def test_supports_resources_without_sub_capabilities
       start_server
 
-      response = send_message(a_valid_initialize_request)
+      response = send_message a_valid_initialize_request
 
       expected = {
         subscribe: false,
@@ -65,7 +65,7 @@ module MCP
           capabilities: {}
         }
       )
-      response = send_message(request)
+      response = send_message request
 
       assert response[:error]
       assert_equal Constants::ErrorCodes::INVALID_PARAMS, response[:error][:code]
@@ -78,7 +78,7 @@ module MCP
       request = json_rpc_message(
         method: Constants::RequestMethods::TOOLS_LIST
       )
-      response = send_message(request)
+      response = send_message request
 
       assert response[:error]
       assert_equal Constants::ErrorCodes::NOT_INITIALIZED, response[:error][:code]
