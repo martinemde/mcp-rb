@@ -102,7 +102,7 @@ module MCP
       assert_server_has_stopped
     end
 
-    def test_non_json_message
+    def test_does_not_allow_non_json_messages
       start_server
 
       response = send_message "not json"
