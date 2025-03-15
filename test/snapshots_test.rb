@@ -37,6 +37,8 @@ class SnapshotsTest < MCPTest::TestCase
   def with_started_server(filename)
     root_path = File.expand_path("..", __dir__)
     server_path = File.join(root_path, filename)
+    raise "Server file not found: #{filename}" unless File.exist?(server_path)
+
     IO.popen(["ruby", server_path], "r+") do |server_io|
       server_io.sync = true
       yield server_io
