@@ -63,6 +63,14 @@ module MCP
       refute_includes response[:result][:capabilities].keys, :prompts
     end
 
+    def test_does_not_support_logging
+      start_server
+
+      response = send_message a_valid_initialize_request
+
+      refute_includes response[:result][:capabilities].keys, :logging
+    end
+
     def test_returns_nothing_on_initialized_notification
       start_server
       send_message a_valid_initialize_request

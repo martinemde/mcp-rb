@@ -146,7 +146,6 @@ module MCP
         result: {
           protocolVersion: Constants::PROTOCOL_VERSION,
           capabilities: {
-            logging: {},
             resources: {
               subscribe: false,
               listChanged: false
