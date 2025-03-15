@@ -55,6 +55,14 @@ module MCP
       assert_equal expected, response[:result][:capabilities][:resources]
     end
 
+    def test_does_not_support_prompts
+      start_server
+
+      response = send_message a_valid_initialize_request
+
+      refute_includes response[:result][:capabilities].keys, :prompts
+    end
+
     def test_returns_nothing_on_initialized_notification
       start_server
       send_message a_valid_initialize_request
