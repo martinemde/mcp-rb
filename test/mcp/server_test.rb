@@ -4,153 +4,249 @@ require_relative "../test_helper"
 
 module MCP
   class ServerTest < MCPTest::TestCase
-    def test_server_initialization
-      server = Server.new(name: "test_server")
-      assert_equal "test_server", server.name
-      assert_equal "0.1.0", server.version
-      refute server.initialized
+    def test_basic_server_info
+      prepare_server(name: "special_test_server", version: "1.4.1")
+
+      assert_equal "special_test_server", @server.name
+      assert_equal "1.4.1", @server.version
     end
 
-    def test_initialize_request
-      server = Server.new(name: "test_server")
-      request = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        method: MCP::Constants::RequestMethods::INITIALIZE,
-        params: {
-          protocolVersion: MCP::Constants::PROTOCOL_VERSION,
-          capabilities: {},
-          clientInfo: {
-            name: "test_client",
-            version: "1.0.0"
-          }
-        },
-        id: 1
-      }
+    def test_knows_if_initialized
+      start_server
 
-      response = server.send(:handle_request, request)
-      assert_equal MCP::Constants::JSON_RPC_VERSION, response[:jsonrpc]
-      assert_equal 1, response[:id]
-      assert_equal MCP::Constants::PROTOCOL_VERSION, response[:result][:protocolVersion]
-      assert_equal false, response[:result][:capabilities][:tools][:listChanged]
+      refute @server.initialized?
+
+      send_message a_valid_initialize_request
+      send_message a_valid_initialized_notification
+
+      assert @server.initialized?
     end
 
-    def test_initialize_with_unsupported_version
-      server = Server.new(name: "test_server")
-      request = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        method: MCP::Constants::RequestMethods::INITIALIZE,
-        params: {
-          protocolVersion: "1999-01-01",
-          capabilities: {}
-        },
-        id: 1
-      }
+    def test_responds_with_server_info_on_initialize
+      start_server(name: "special_test_server", version: "1.4.1")
 
-      response = server.send(:handle_request, request)
-      assert_equal "2.0", response[:jsonrpc]
-      assert_equal 1, response[:id]
-      assert response[:error]
-      assert_equal "Unsupported protocol version", response[:error][:message]
+      response = send_message a_valid_initialize_request
+
+      expected = {
+        name: "special_test_server",
+        version: "1.4.1"
+      }
+      assert_equal expected, response[:result][:serverInfo]
     end
 
-    def test_initialized_notification
-      server = Server.new(name: "test_server")
+    def test_supports_tools_without_list_changed
+      start_server
 
-      # First initialize
-      init_request = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        method: MCP::Constants::RequestMethods::INITIALIZE,
-        params: {
-          protocolVersion: MCP::Constants::PROTOCOL_VERSION,
-          capabilities: {}
-        },
-        id: 1
-      }
-      server.send(:handle_request, init_request)
+      response = send_message a_valid_initialize_request
 
-      # Then send initialized notification
-      init_notification = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        method: MCP::Constants::RequestMethods::INITIALIZED,
-        id: 2
+      expected = {listChanged: false}
+      assert_equal expected, response[:result][:capabilities][:tools]
+    end
+
+    def test_supports_resources_without_sub_capabilities
+      start_server
+
+      response = send_message a_valid_initialize_request
+
+      expected = {
+        subscribe: false,
+        listChanged: false
       }
-      response = server.send(:handle_request, init_notification)
+      assert_equal expected, response[:result][:capabilities][:resources]
+    end
+
+    def test_returns_nothing_on_initialized_notification
+      start_server
+      send_message a_valid_initialize_request
+
+      response = send_message a_valid_initialized_notification
 
       assert_nil response
     end
 
-    def test_request_before_initialization
-      server = Server.new(name: "test_server")
-      request = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        method: MCP::Constants::RequestMethods::TOOLS_LIST,
-        id: 1
-      }
+    def test_does_not_allow_unsupported_protocol_version
+      start_server
 
-      response = server.send(:handle_request, request)
-      assert_equal(-32_002, response[:error][:code])
+      request = json_rpc_message(
+        method: Constants::RequestMethods::INITIALIZE,
+        params: {
+          protocolVersion: "1999-01-01",
+          capabilities: {}
+        }
+      )
+      response = send_message request
+
+      assert response[:error]
+      assert_equal Constants::ErrorCodes::INVALID_PARAMS, response[:error][:code]
+      assert_equal "Unsupported protocol version", response[:error][:message]
+    end
+
+    def test_does_not_allow_non_ping_requests_before_initialize
+      start_server
+
+      request = json_rpc_message(
+        method: Constants::RequestMethods::TOOLS_LIST
+      )
+      response = send_message request
+
+      assert response[:error]
+      assert_equal Constants::ErrorCodes::NOT_INITIALIZED, response[:error][:code]
       assert_equal "Server not initialized", response[:error][:message]
     end
 
-    def test_handle_call_tool
-      server = Server.new(name: "test_server")
-      initialize_server(server)
+    def test_allows_ping_requests_before_initialize
+      start_server
 
-      # Register and call the tool
-      server.tool("echo") do
-        description "Echo a message"
-        argument :message, String, required: true, description: "Message to echo"
-        call { |args| args[:message] }
-      end
+      response = send_message a_valid_ping_request
 
-      request = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        id: 1,
-        method: MCP::Constants::RequestMethods::TOOLS_CALL,
-        params: {
-          name: "echo",
-          arguments: {message: "hello"}
-        }
-      }
-
-      response = server.send(:handle_request, request)
-
-      assert_equal "2.0", response[:jsonrpc]
-      assert_equal 1, response[:id]
-      assert_match(/hello/, response[:result][:content].first[:text])
-      refute response[:result][:isError]
-
-      # Test error handling
-      request = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        id: 2,
-        method: MCP::Constants::RequestMethods::TOOLS_CALL,
-        params: {
-          name: "non_existent_tool",
-          arguments: {}
-        }
-      }
-
-      response = server.send(:handle_request, request)
-      assert_equal "2.0", response[:jsonrpc]
-      assert_equal 2, response[:id]
-      assert response[:error]
-      assert_match(/Tool not found/, response[:error][:message])
+      assert_successful_response response
     end
 
-    def test_handle_ping
-      server = Server.new(name: "test_server")
+    def test_client_closing_connection
+      start_initialized_server
 
-      request = {
-        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
-        method: MCP::Constants::RequestMethods::PING,
-        id: 1
-      }
+      send_message nil
 
-      response = server.send(:handle_request, request)
-      assert_equal "2.0", response[:jsonrpc]
-      assert_equal 1, response[:id]
-      assert_equal({}, response[:result])
+      assert_server_has_stopped
+    end
+
+    def test_does_not_allow_non_json_messages
+      start_server
+
+      response = send_message "not json"
+
+      assert response[:error]
+      assert_equal Constants::ErrorCodes::PARSE_ERROR, response[:error][:code]
+      assert_includes response[:error][:message], "Invalid JSON"
+    end
+
+    def test_reports_internal_errors
+      start_server
+
+      @server.stub(:handle_request, proc { raise "Something went wrong" }) do
+        response = send_message a_valid_ping_request
+
+        assert response[:error]
+        assert_equal Constants::ErrorCodes::INTERNAL_ERROR, response[:error][:code]
+        assert_includes response[:error][:message], "Something went wrong"
+      end
+    end
+
+    private
+
+    # Assumed to be run inside a Fiber
+    class MockClientConnection
+      include Server::ClientConnection
+
+      def initialize
+        @pending_client_messages = []
+        @pending_server_messages = []
+      end
+
+      # ClientConnection interface methods
+      def read_next_message
+        Fiber.yield while @pending_client_messages.empty?
+
+        @pending_client_messages.shift
+      end
+
+      def send_message(message)
+        @pending_server_messages << message
+      end
+
+      # Test helper methods
+      def <<(message)
+        @pending_client_messages << message
+      end
+
+      def next_pending_server_message
+        @pending_server_messages.shift
+      end
+    end
+
+    def start_initialized_server(...)
+      start_server(...)
+      send_message a_valid_initialize_request
+      send_message a_valid_initialized_notification
+    end
+
+    def start_server(...)
+      prepare_server(...)
+
+      @mock_client_connection = MockClientConnection.new
+      @server_fiber = Fiber.new { @server.serve(@mock_client_connection) }
+      @server_fiber.resume
+    end
+
+    def prepare_server(name: "test_server", version: nil)
+      kwargs = {
+        name: name,
+        version: version
+      }.compact
+      @server = Server.new(**kwargs)
+    end
+
+    def send_message(message)
+      @mock_client_connection << message
+      @server_fiber.resume
+      next_pending_server_message
+    end
+
+    def next_pending_server_message
+      result = @mock_client_connection.next_pending_server_message
+      result = JSON.parse(result, symbolize_names: true) if result
+      result
+    end
+
+    def a_valid_initialize_request
+      json_rpc_message(
+        method: Constants::RequestMethods::INITIALIZE,
+        params: {
+          protocolVersion: Constants::PROTOCOL_VERSION,
+          capabilities: {}
+        }
+      )
+    end
+
+    def a_valid_initialized_notification
+      json_rpc_notification(
+        method: Constants::RequestMethods::INITIALIZED
+      )
+    end
+
+    def a_valid_ping_request
+      json_rpc_message(
+        method: Constants::RequestMethods::PING
+      )
+    end
+
+    def assert_successful_response(response)
+      assert response[:result]
+    end
+
+    def assert_server_has_stopped
+      refute_predicate @server_fiber, :alive?
+    end
+
+    def json_rpc_message(values)
+      @next_id ||= 1
+
+      result = {
+        jsonrpc: Constants::JSON_RPC_VERSION,
+        id: @next_id,
+        **values
+      }.to_json
+
+      @next_id += 1
+
+      result
+    end
+
+    def json_rpc_notification(values)
+      {
+        jsonrpc: Constants::JSON_RPC_VERSION,
+        **values
+      }.to_json
     end
   end
 end

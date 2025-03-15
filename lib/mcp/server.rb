@@ -4,11 +4,12 @@ require "json"
 require "English"
 require "uri"
 require_relative "constants"
+require_relative "server/client_connection"
+require_relative "server/stdio_client_connection"
 
 module MCP
   class Server
     attr_writer :name, :version
-    attr_reader :initialized
 
     def initialize(name:, version: "0.1.0")
       @name = name
@@ -43,9 +44,23 @@ module MCP
       @app.register_resource_template(uri_template, &block)
     end
 
-    def run
-      while (input = $stdin.gets)
-        process_input(input)
+    def initialized?
+      @initialized
+    end
+
+    # Serve a client via the given connection.
+    # This method will block while the client is connected.
+    # It's the caller's responsibility to create Threads or Fibers to handle multiple clients.
+    # @param client_connection [ClientConnection] The connection to the client.
+    def serve(client_connection)
+      loop do
+        next_message = client_connection.read_next_message
+        break if next_message.nil? # Client closed the connection
+
+        response = process_input(next_message)
+        next unless response # Notifications don't return a response so don't send anything
+
+        client_connection.send_message(response)
       end
     end
 
@@ -72,17 +87,17 @@ module MCP
     private
 
     def process_input(line)
-      request = JSON.parse(line, symbolize_names: true)
-      response = handle_request(request)
-      return unless response # 通知の場合はnilが返されるので、何も出力しない
+      result = begin
+        request = JSON.parse(line, symbolize_names: true)
+        handle_request(request)
+      rescue JSON::ParserError => e
+        error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
+      rescue => e
+        error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
+      end
 
-      response_json = JSON.generate(response)
-      $stdout.puts(response_json)
-      $stdout.flush
-    rescue JSON::ParserError => e
-      error_response(nil, Constants::ErrorCodes::INVALID_REQUEST, "Invalid JSON: #{e.message}")
-    rescue => e
-      error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
+      result = JSON.generate(result) if result
+      result
     end
 
     def handle_request(request)
@@ -116,7 +131,7 @@ module MCP
       unless @supported_protocol_versions.include?(client_version)
         return error_response(
           request[:id],
-          Constants::ErrorCodes::UNSUPPORTED_PROTOCOL_VERSION,
+          Constants::ErrorCodes::INVALID_PARAMS,
           "Unsupported protocol version",
           {
             supported: @supported_protocol_versions,
