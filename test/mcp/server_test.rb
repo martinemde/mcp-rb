@@ -92,9 +92,12 @@ module MCP
       )
       response = send_message request
 
-      assert response[:error]
-      assert_equal Constants::ErrorCodes::INVALID_PARAMS, response[:error][:code]
-      assert_equal "Unsupported protocol version", response[:error][:message]
+      expected_error = {
+        code: Constants::ErrorCodes::INVALID_PARAMS,
+        message: "Unsupported protocol version",
+        data: {supported: ["2024-11-05"], requested: "1999-01-01"}
+      }
+      assert_equal expected_error, response[:error]
     end
 
     def test_does_not_allow_non_ping_requests_before_initialize
@@ -105,9 +108,11 @@ module MCP
       )
       response = send_message request
 
-      assert response[:error]
-      assert_equal Constants::ErrorCodes::NOT_INITIALIZED, response[:error][:code]
-      assert_equal "Server not initialized", response[:error][:message]
+      expected_error = {
+        code: Constants::ErrorCodes::NOT_INITIALIZED,
+        message: "Server not initialized"
+      }
+      assert_equal expected_error, response[:error]
     end
 
     def test_allows_ping_requests_before_initialize
@@ -131,9 +136,11 @@ module MCP
 
       response = send_message "not json"
 
-      assert response[:error]
-      assert_equal Constants::ErrorCodes::PARSE_ERROR, response[:error][:code]
-      assert_includes response[:error][:message], "Invalid JSON"
+      expected_error = {
+        code: Constants::ErrorCodes::PARSE_ERROR,
+        message: "Invalid JSON: unexpected token at 'not json'"
+      }
+      assert_equal expected_error, response[:error]
     end
 
     def test_reports_internal_errors
