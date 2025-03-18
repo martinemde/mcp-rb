@@ -53,7 +53,7 @@ module MCP
 
     def params_errors_of_matching_sub_schema(message, all_errors)
       # JSON Schemer returns errors for all sub-schemas if none of them match the data.
-      # So we need to check if all each sub-schema has at least one error for the "/method" data pointer.
+      # So first we group the errors by the sub-schema they were produced by.
       errors_grouped_by_sub_schema = all_errors.group_by {
         # /definitions/SubSchemaName/...
         _, _, sub_schema, = _1["schema_pointer"].split("/")
@@ -62,6 +62,7 @@ module MCP
 
       result = []
       errors_grouped_by_sub_schema.each do |sub_schema_name, errors|
+        # If there is an error for the "method" property, we know that this is not the correct sub-schema.
         next if errors.any? { _1["data_pointer"] == "/method" }
 
         result = errors
