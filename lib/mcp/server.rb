@@ -95,6 +95,12 @@ module MCP
         handle_request deep_symbolize_keys(request)
       rescue JSON::ParserError => e
         error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
+      rescue MessageValidator::InvalidMethod
+        error_response(
+          request["id"],
+          Constants::ErrorCodes::METHOD_NOT_FOUND,
+          "Unknown method: #{request["method"]}"
+        )
       rescue MessageValidator::InvalidMessage => e
         error_response(
           nil,
@@ -140,8 +146,6 @@ module MCP
       when Constants::RequestMethods::RESOURCES_LIST then handle_list_resources(request)
       when Constants::RequestMethods::RESOURCES_READ then handle_read_resource(request)
       when Constants::RequestMethods::RESOURCES_TEMPLATES_LIST then handle_list_resources_templates(request)
-      else
-        error_response(request[:id], Constants::ErrorCodes::METHOD_NOT_FOUND, "Unknown method: #{request[:method]}")
       end
     end
 

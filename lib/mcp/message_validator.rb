@@ -13,6 +13,12 @@ module MCP
 
     def validate_client_message!(message)
       ensure_minimal_client_message_requirements!(message)
+
+      errors = client_message_validation_errors(message)
+      return if errors.empty?
+
+      params_errors = errors_of_matching_sub_schema(message, errors)
+      raise InvalidMethod if params_errors.empty?
     end
 
     class InvalidMessage < StandardError
@@ -24,12 +30,41 @@ module MCP
       end
     end
 
+    class InvalidMethod < StandardError; end
+
     private
 
     def ensure_minimal_client_message_requirements!(message)
       # Validate against notification since it's the minimum requirement for a valid JSON-RPC message
       errors = validation_errors(message, "JSONRPCNotification")
       raise InvalidMessage.new(errors) if errors.any?
+    end
+
+    def client_message_validation_errors(message)
+      if message.key? "id"
+        validation_errors(message, "ClientRequest")
+      else
+        validation_errors(message, "ClientNotification")
+      end
+    end
+
+    def errors_of_matching_sub_schema(message, errors)
+      # JSON Schemer returns errors for all sub-schemas if none of them match the data.
+      # So we need to check if all each sub-schema has at least one error for the "/method" data pointer.
+      errors_grouped_by_sub_schema = errors.group_by {
+        # /definitions/SubSchemaName/...
+        _, _, sub_schema, = _1["schema_pointer"].split("/")
+        sub_schema
+      }
+
+      result = []
+      errors_grouped_by_sub_schema.each do |sub_schema_name, errors|
+        next if errors.any? { _1["data_pointer"] == "/method" }
+
+        result = errors
+        break
+      end
+      result
     end
 
     def matching_sub_schema?(json, sub_schema_name)

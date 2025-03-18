@@ -13,5 +13,20 @@ module MCP
         validator.validate_client_message!(invalid_message)
       end
     end
+
+    def test_invalid_method
+      validator = MessageValidator.new
+
+      invalid_message = {
+        "jsonrpc" => "2.0",
+        "method" => "invalidMethod",
+        "params" => {},
+        "id" => 1
+      }
+
+      assert_raises(MessageValidator::InvalidMethod) do
+        validator.validate_client_message!(invalid_message)
+      end
+    end
   end
 end
