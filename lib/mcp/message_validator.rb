@@ -14,10 +14,10 @@ module MCP
     def validate_client_message!(message)
       ensure_minimal_client_message_requirements!(message)
 
-      errors = client_message_validation_errors(message)
-      return if errors.empty?
+      all_errors = client_message_validation_errors(message)
+      return if all_errors.empty?
 
-      params_errors = errors_of_matching_sub_schema(message, errors)
+      params_errors = params_errors_of_matching_sub_schema(message, all_errors)
       raise InvalidMethod if params_errors.empty?
       raise InvalidParams.new(params_errors)
     end
@@ -51,10 +51,10 @@ module MCP
       end
     end
 
-    def errors_of_matching_sub_schema(message, errors)
+    def params_errors_of_matching_sub_schema(message, all_errors)
       # JSON Schemer returns errors for all sub-schemas if none of them match the data.
       # So we need to check if all each sub-schema has at least one error for the "/method" data pointer.
-      errors_grouped_by_sub_schema = errors.group_by {
+      errors_grouped_by_sub_schema = all_errors.group_by {
         # /definitions/SubSchemaName/...
         _, _, sub_schema, = _1["schema_pointer"].split("/")
         sub_schema
