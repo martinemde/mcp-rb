@@ -87,7 +87,11 @@ module MCP
         method: Constants::RequestMethods::INITIALIZE,
         params: {
           protocolVersion: "1999-01-01",
-          capabilities: {}
+          capabilities: {},
+          clientInfo: {
+            name: "test_client",
+            version: "1.0.0"
+          }
         }
       )
       response = send_message request
@@ -278,7 +282,11 @@ module MCP
         method: Constants::RequestMethods::INITIALIZE,
         params: {
           protocolVersion: Constants::PROTOCOL_VERSION,
-          capabilities: {}
+          capabilities: {},
+          clientInfo: {
+            name: "test_client",
+            version: "1.0.0"
+          }
         }
       )
     end
