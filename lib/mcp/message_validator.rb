@@ -60,15 +60,15 @@ module MCP
         sub_schema
       }
 
-      result = []
       errors_grouped_by_sub_schema.each do |sub_schema_name, errors|
         # If there is an error for the "method" property, we know that this is not the correct sub-schema.
         next if errors.any? { _1["data_pointer"] == "/method" }
 
-        result = errors
-        break
+        # The remaining errors are for params etc. which is what we want
+        return errors
       end
-      result
+
+      []
     end
 
     def matching_sub_schema?(json, sub_schema_name)
