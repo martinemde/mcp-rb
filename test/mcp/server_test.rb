@@ -143,6 +143,22 @@ module MCP
       assert_equal expected_error, response[:error]
     end
 
+    def test_does_not_allow_non_json_rpc_messages
+      start_server
+      non_json_rpc_message = {"some_key" => "some_value"}.to_json
+
+      response = send_message non_json_rpc_message
+
+      expected_error = {
+        code: Constants::ErrorCodes::INVALID_REQUEST,
+        message: "Invalid request",
+        data: {
+          errors: ["object at root is missing required properties: jsonrpc, method"]
+        }
+      }
+      assert_equal expected_error, response[:error]
+    end
+
     def test_reports_internal_errors
       start_server
 

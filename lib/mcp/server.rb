@@ -4,6 +4,7 @@ require "json"
 require "English"
 require "uri"
 require_relative "constants"
+require_relative "message_validator"
 require_relative "server/client_connection"
 require_relative "server/stdio_client_connection"
 
@@ -17,6 +18,7 @@ module MCP
       @app = App.new
       @initialized = false
       @supported_protocol_versions = [Constants::PROTOCOL_VERSION]
+      @message_validator = MessageValidator.new protocol_version: Constants::PROTOCOL_VERSION
     end
 
     def name(value = nil)
@@ -88,16 +90,35 @@ module MCP
 
     def process_input(line)
       result = begin
-        request = JSON.parse(line, symbolize_names: true)
-        handle_request(request)
+        request = JSON.parse(line)
+        @message_validator.validate_client_message!(request)
+        handle_request deep_symbolize_keys(request)
       rescue JSON::ParserError => e
         error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
+      rescue MessageValidator::InvalidMessage => e
+        error_response(
+          nil,
+          Constants::ErrorCodes::INVALID_REQUEST,
+          "Invalid request",
+          {errors: e.errors}
+        )
       rescue => e
         error_response(nil, Constants::ErrorCodes::INTERNAL_ERROR, e.message)
       end
 
       result = JSON.generate(result) if result
       result
+    end
+
+    def deep_symbolize_keys(obj)
+      case obj
+      when Hash
+        obj.to_h { |key, value| [key.to_sym, deep_symbolize_keys(value)] }
+      when Array
+        obj.map { |value| deep_symbolize_keys(value) }
+      else
+        obj
+      end
     end
 
     def handle_request(request)
