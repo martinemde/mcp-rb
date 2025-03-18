@@ -159,6 +159,21 @@ module MCP
       assert_equal expected_error, response[:error]
     end
 
+    def test_does_not_allow_messages_with_unknown_method
+      start_initialized_server
+
+      request = json_rpc_message(
+        method: "unknown_method"
+      )
+      response = send_message request
+
+      expected_error = {
+        code: Constants::ErrorCodes::METHOD_NOT_FOUND,
+        message: "Unknown method: unknown_method"
+      }
+      assert_equal expected_error, response[:error]
+    end
+
     def test_reports_internal_errors
       start_server
 
