@@ -101,6 +101,13 @@ module MCP
           Constants::ErrorCodes::METHOD_NOT_FOUND,
           "Unknown method: #{request["method"]}"
         )
+      rescue MessageValidator::InvalidParams => e
+        error_response(
+          request["id"],
+          Constants::ErrorCodes::INVALID_PARAMS,
+          "Invalid params",
+          {errors: e.errors}
+        )
       rescue MessageValidator::InvalidMessage => e
         error_response(
           nil,

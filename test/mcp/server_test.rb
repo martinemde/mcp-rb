@@ -174,6 +174,27 @@ module MCP
       assert_equal expected_error, response[:error]
     end
 
+    def test_does_not_allow_messages_with_invalid_params
+      start_initialized_server
+
+      request = json_rpc_message(
+        method: Constants::RequestMethods::RESOURCES_READ,
+        params: {
+          invalid_param: "invalid_value"
+        }
+      )
+      response = send_message request
+
+      expected_error = {
+        code: Constants::ErrorCodes::INVALID_PARAMS,
+        message: "Invalid params",
+        data: {
+          errors: ["object at `/params` is missing required properties: uri"]
+        }
+      }
+      assert_equal expected_error, response[:error]
+    end
+
     def test_reports_internal_errors
       start_server
 

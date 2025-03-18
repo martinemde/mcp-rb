@@ -19,6 +19,7 @@ module MCP
 
       params_errors = errors_of_matching_sub_schema(message, errors)
       raise InvalidMethod if params_errors.empty?
+      raise InvalidParams.new(params_errors)
     end
 
     class InvalidMessage < StandardError
@@ -31,6 +32,8 @@ module MCP
     end
 
     class InvalidMethod < StandardError; end
+
+    class InvalidParams < InvalidMessage; end
 
     private
 
