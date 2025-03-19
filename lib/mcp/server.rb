@@ -93,7 +93,7 @@ module MCP
         handle_request deep_symbolize_keys(request)
       rescue JSON::ParserError => e
         error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
-      rescue MessageValidator::InvalidMethod
+      rescue MessageValidator::UnknownMethod
         error_response(
           request["id"],
           Constants::ErrorCodes::METHOD_NOT_FOUND,

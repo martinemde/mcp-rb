@@ -14,7 +14,7 @@ module MCP
       end
     end
 
-    def test_invalid_method
+    def test_unknown_method
       validator = MessageValidator.new
 
       invalid_message = {
@@ -24,7 +24,7 @@ module MCP
         "id" => 1
       }
 
-      assert_raises(MessageValidator::InvalidMethod) do
+      assert_raises(MessageValidator::UnknownMethod) do
         validator.validate_client_message!(invalid_message)
       end
     end

@@ -31,7 +31,7 @@ module MCP
       return if all_errors.empty?
 
       params_errors = params_errors_of_matching_sub_schema(message, all_errors)
-      raise InvalidMethod if params_errors.empty?
+      raise UnknownMethod if params_errors.empty?
       raise InvalidParams.new(params_errors)
     end
 
@@ -48,7 +48,7 @@ module MCP
     end
 
     # Exception raised when the method of the message is unknown
-    class InvalidMethod < StandardError; end
+    class UnknownMethod < StandardError; end
 
     # Exception raised when parameters in the message are invalid
     #
