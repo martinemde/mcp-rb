@@ -17,7 +17,6 @@ module MCP
       @version = version
       @app = App.new
       @initialized = false
-      @supported_protocol_versions = [Constants::PROTOCOL_VERSION]
       @message_validator = MessageValidator.new protocol_version: Constants::PROTOCOL_VERSION
     end
 
@@ -31,7 +30,6 @@ module MCP
       return @version if value.nil?
 
       @version = value
-      @supported_protocol_versions << value
     end
 
     def tool(name, &block)
@@ -160,13 +158,13 @@ module MCP
       return error_response(request[:id], Constants::ErrorCodes::ALREADY_INITIALIZED, "Server already initialized") if @initialized
 
       client_version = request.dig(:params, :protocolVersion)
-      unless @supported_protocol_versions.include?(client_version)
+      unless Constants::SUPPORTED_PROTOCOL_VERSIONS.include?(client_version)
         return error_response(
           request[:id],
           Constants::ErrorCodes::INVALID_PARAMS,
           "Unsupported protocol version",
           {
-            supported: @supported_protocol_versions,
+            supported: Constants::SUPPORTED_PROTOCOL_VERSIONS,
             requested: client_version
           }
         )
