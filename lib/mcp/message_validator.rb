@@ -6,11 +6,24 @@ module MCP
   class MessageValidator
     SCHEMA_ROOT_PATH = File.expand_path(File.join("..", "..", "schemas"), __dir__)
 
+    # Initializes a new validator for messages according to the specified protocol version
+    #
+    # @param protocol_version [String] The version of the protocol to validate against, defaults to the current version
+    #   defined in Constants::PROTOCOL_VERSION
+    # @return [MessageValidator] A new instance of MessageValidator
     def initialize(protocol_version: Constants::PROTOCOL_VERSION)
       schema_path = File.join(SCHEMA_ROOT_PATH, "#{protocol_version}.json")
       @root_schema = JSONSchemer.schema(Pathname.new(schema_path))
     end
 
+    # Validates a client message against the JSON schema
+    #
+    # Raises an exception if the message doesn't conform to the schema otherwise does nothing.
+    #
+    # @param message [Hash] The client message to validate - should be a JSON object with string keys
+    # @raise [InvalidMessage] If the message isn't a valid JSON-RPC message
+    # @raise [InvalidMethod] If the method in the message is invalid
+    # @raise [InvalidParams] If the parameters in the message are invalid
     def validate_client_message!(message)
       ensure_minimal_client_message_requirements!(message)
 
@@ -22,6 +35,9 @@ module MCP
       raise InvalidParams.new(params_errors)
     end
 
+    # Exception raised when the message is not a valid JSON-RPC message
+    #
+    # @attr_reader errors [Array<String>] The validation error messages
     class InvalidMessage < StandardError
       attr_reader :errors
 
@@ -31,8 +47,12 @@ module MCP
       end
     end
 
+    # Exception raised when the method of the message is unknown
     class InvalidMethod < StandardError; end
 
+    # Exception raised when parameters in the message are invalid
+    #
+    # @attr_reader errors [Array<String>] The validation error messages
     class InvalidParams < InvalidMessage; end
 
     private
