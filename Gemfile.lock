@@ -1,3 +1,9 @@
+PATH
+  remote: .
+  specs:
+    mcp-rb (0.3.2)
+      json_schemer
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -69,7 +75,7 @@ PLATFORMS
 
 DEPENDENCIES
   json
-  json_schemer (~> 2.4)
+  mcp-rb!
   minitest
   minitest-reporters
   minitest-snapshots
