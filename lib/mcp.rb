@@ -15,10 +15,8 @@ module MCP
   extend MCP::Autorun
   @app_file = cleaned_caller(1).flatten.first
   class << self
-    attr_reader :server
-
-    def initialize_server(name:, **options)
-      @server ||= Server.new(name: name, **options)
+    def server
+      @server ||= Server.new(App.new)
     end
 
     def run?
