@@ -7,6 +7,7 @@ gemspec
 gem "json"
 
 group :development, :test do
+  gem "rake"
   gem "minitest"
   gem "minitest-reporters"
   # For snapshot testing of client/server interactions
