@@ -19,26 +19,17 @@ module MCP
       @server ||= Server.new(App.new)
     end
 
+    def serve
+      server.serve(Server::StdioClientConnection.new)
+    end
+
     def run?
       File.expand_path($PROGRAM_NAME) == File.expand_path(@app_file) && $ERROR_INFO.nil? && $stdin.stat.readable?
     end
   end
 
-  # require 'mcp' したファイルで最後に到達したら実行されるようにするため
-  # https://docs.ruby-lang.org/ja/latest/method/Kernel/m/at_exit.html
-  at_exit { server.serve(Server::StdioClientConnection.new) if run? && $ERROR_INFO.nil? && server }
-
-  def self.new(**options, &block)
-    @server = Server.new(**options)
-    return @server if block.nil?
-
-    if block.arity.zero?
-      @server.instance_eval(&block)
-    else
-      (block.arity == 1) ? yield(@server) : yield
-    end
-
-    @server
+  at_exit do
+    serve if run?
   end
 end
 
