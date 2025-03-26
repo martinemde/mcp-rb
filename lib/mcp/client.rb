@@ -7,14 +7,15 @@ require_relative "constants"
 
 module MCP
   class Client
-    attr_reader :command, :args, :process, :stdin, :stdout, :stderr, :wait_thread
+    attr_reader :command, :args, :process, :stdin, :stdout, :stderr, :wait_thread, :roots
 
-    def initialize(command:, args: [], name: "mcp-client", version: VERSION)
+    def initialize(command:, args: [], name: "mcp-client", version: VERSION, roots: nil)
       @command = command
       @args = args
       @process = nil
       @name = name
       @version = version
+      @roots = roots
     end
 
     def connect
@@ -47,6 +48,16 @@ module MCP
           arguments: args
         },
         id: SecureRandom.uuid
+      })
+    end
+
+    def roots=(roots)
+      ensure_running
+      raise "Client did not declare support for roots at initialization" unless @roots
+      @roots = roots
+      send_request({
+        jsonrpc: Constants::JSON_RPC_VERSION,
+        method: Constants::RequestMethods::ROOTS_LIST_CHANGED,
       })
     end
 

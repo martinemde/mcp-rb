@@ -29,4 +29,4 @@ module MCP
       ROOTS_LIST_CHANGED = "notifications/roots/list_changed"
     end
   end
-end.freeze
+end
