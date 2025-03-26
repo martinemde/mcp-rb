@@ -2,12 +2,16 @@
 
 require "minitest/autorun"
 require "minitest/reporters"
+require "minitest/pride"
 Minitest::Reporters.use! Minitest::Reporters::SpecReporter.new
 
 require_relative "../lib/mcp"
+require_relative "support/mcp_test_helpers"
 
 module MCPTest
   class TestCase < Minitest::Test
+    include MCPTest::Helpers
+
     def setup
       MCP::App.reset!
     end
