@@ -20,4 +20,16 @@ namespace :test do
   end
 end
 
+desc "Run standardrb linter"
+task :lint do
+  sh "bundle exec standardrb"
+end
+
+namespace :lint do
+  desc "Auto-fix standardrb issues"
+  task :fix do
+    sh "bundle exec standardrb --fix"
+  end
+end
+
 task default: :test
