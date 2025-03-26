@@ -81,6 +81,8 @@ Reference: [MCP 2024-11-05](https://spec.modelcontextprotocol.io/specification/2
   - Tools
     - tools/list
     - tools/call
+  - Notifications
+    - notifications/roots/list_changed"
 
 Any capabilities are not supported yet.
 

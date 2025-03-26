@@ -8,9 +8,11 @@ class SnapshotsTest < MCPTest::TestCase
     with_started_server("examples/hello_world.rb") do |server_io|
       client_messages = [
         # Initialize request
-        '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05"}, "id": 1}',
+        '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": { "roots": { "listChanged": true } }}, "id": 1}',
         # Initialized notification
         '{"jsonrpc": "2.0", "method": "notifications/initialized"}',
+        # Respond to roots list request
+        '{"jsonrpc": "2.0", "method": "roots/list", "result": {"roots": [{"uri": "users://test", "name": "Test Root"}]}, "id": "s1"}',
         # List tools request
         '{"jsonrpc": "2.0", "method": "tools/list", "id": 2}',
         # Call greet tool
@@ -24,7 +26,11 @@ class SnapshotsTest < MCPTest::TestCase
         # Read resource template request
         '{"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "users://test"}, "id": 7 }',
         # Read nested resource template request
-        '{"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "users://test/posts/3"}, "id": 9}'
+        '{"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "users://test/posts/3"}, "id": 9}',
+        # Roots list changed notification
+        '{"jsonrpc": "2.0", "method": "notifications/roots/list_changed", "params": {}}',
+        # Roots list response
+        '{"jsonrpc": "2.0", "method": "roots/list", "result": {"roots": [{"uri": "users://test", "name": "Test Root"}]}, "id": "s2"}'
       ]
       snapshot_text = record_interaction(server_io, client_messages)
 

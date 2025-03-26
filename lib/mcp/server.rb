@@ -10,12 +10,17 @@ require_relative "server/stdio_client_connection"
 module MCP
   # A Server handles MCP requests from an MCP client using the App.
   class Server
+    MAX_AWAITING_RESPONSES = 100
+
     attr_reader :app
 
     def initialize(app)
       @app = app
       @initialized = false
       @supported_protocol_versions = [Constants::PROTOCOL_VERSION]
+      @client_capabilities = {}
+      @request_id_counter = 0
+      @awaiting_responses = {}
     end
 
     def name
@@ -40,9 +45,14 @@ module MCP
         break if next_message.nil? # Client closed the connection
 
         response = process_input(next_message)
-        next unless response # Notifications don't return a response so don't send anything
 
-        client_connection.send_message(response)
+        # Notifications don't return a response so don't send anything
+        client_connection.send_message(response) if response
+
+        # Check if we need to perform any pending actions
+        pending_actions do |request|
+          client_connection.send_message(request)
+        end
       end
     end
 
@@ -70,8 +80,14 @@ module MCP
 
     def process_input(line)
       result = begin
-        request = JSON.parse(line, symbolize_names: true)
-        handle_request(request)
+        message = JSON.parse(line, symbolize_names: true)
+
+        case message
+        in {result: _, id: /^s/} then handle_response(message)
+        in {method: _} then handle_request(message)
+        else
+          error_response(nil, Constants::ErrorCodes::INVALID_REQUEST, "Unknown message format #{message.inspect}")
+        end
       rescue JSON::ParserError => e
         error_response(nil, Constants::ErrorCodes::PARSE_ERROR, "Invalid JSON: #{e.message}")
       rescue => e
@@ -101,6 +117,7 @@ module MCP
       when Constants::RequestMethods::RESOURCES_LIST then handle_list_resources(request)
       when Constants::RequestMethods::RESOURCES_READ then handle_read_resource(request)
       when Constants::RequestMethods::RESOURCES_TEMPLATES_LIST then handle_list_resources_templates(request)
+      when Constants::RequestMethods::ROOTS_LIST_CHANGED then handle_roots_list_changed_notification(request)
       else
         error_response(request[:id], Constants::ErrorCodes::METHOD_NOT_FOUND, "Unknown method: #{request[:method]}")
       end
@@ -121,6 +138,9 @@ module MCP
           }
         )
       end
+
+      @client_capabilities = request.dig(:params, :capabilities) || {}
+      @should_request_roots = @client_capabilities.dig(:roots, :listChanged) && root_changed_handler?
 
       {
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
@@ -148,7 +168,7 @@ module MCP
       return error_response(request[:id], Constants::ErrorCodes::ALREADY_INITIALIZED, "Server already initialized") if @initialized
 
       @initialized = true
-      nil  # 通知に対しては応答を返さない
+      nil # 通知に対しては応答を返さない (No response for notifications)
     end
 
     def handle_list_tools(request)
@@ -197,6 +217,67 @@ module MCP
 
     def handle_ping(request)
       success_response(request[:id], {})
+    end
+
+    def handle_response(message)
+      id = message[:id]
+      handler = @awaiting_responses.delete(id)
+
+      case handler
+      when Constants::RequestMethods::ROOTS_LIST then handle_roots_list_response(message)
+      else
+        return error_response(id, Constants::ErrorCodes::METHOD_NOT_FOUND, "Unknown response: #{message.inspect}")
+      end
+
+      nil # No response needed back to client
+    end
+
+    def pending_actions(&)
+      if @should_request_roots
+        @should_request_roots = false
+        request = server_request(Constants::RequestMethods::ROOTS_LIST)
+        yield JSON.generate(request)
+      end
+    end
+
+    def root_changed_handler?
+      @app.respond_to?(:root_changed_handler) && @app.root_changed_handler
+    end
+
+    def handle_roots_list_changed_notification(_message)
+      return nil unless root_changed_handler?
+
+      @should_request_roots = false
+      server_request(Constants::RequestMethods::ROOTS_LIST)
+    end
+
+    def handle_roots_list_response(response)
+      return nil unless root_changed_handler?
+
+      roots = response.dig(:result, :roots)
+      @app.root_changed(roots)
+      nil
+    end
+
+    def next_request_id
+      @request_id_counter += 1
+      "s#{@request_id_counter}"
+    end
+
+    def server_request(method)
+      # ensure we don't accumulate unlimited pending requests
+      if @awaiting_responses.size > MAX_AWAITING_RESPONSES
+        @awaiting_responses.shift
+      end
+
+      id = next_request_id
+      @awaiting_responses[id] = method
+
+      {
+        jsonrpc: MCP::Constants::JSON_RPC_VERSION,
+        id: id,
+        method: method
+      }
     end
 
     def success_response(id, result)

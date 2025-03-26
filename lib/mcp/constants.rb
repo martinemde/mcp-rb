@@ -25,6 +25,8 @@ module MCP
       RESOURCES_LIST = "resources/list"
       RESOURCES_READ = "resources/read"
       RESOURCES_TEMPLATES_LIST = "resources/templates/list"
+      ROOTS_LIST = "roots/list"
+      ROOTS_LIST_CHANGED = "notifications/roots/list_changed"
     end
   end
 end.freeze

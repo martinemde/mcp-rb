@@ -1,7 +1,9 @@
 --- |
-  Client: {"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05"}, "id": 1}
+  Client: {"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": { "roots": { "listChanged": true } }}, "id": 1}
   Server: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"resources":{"subscribe":false,"listChanged":false},"tools":{"listChanged":false}},"serverInfo":{"name":"hello-world","version":"1.0.0"}}}
+  Server: {"jsonrpc":"2.0","id":"s1","method":"roots/list"}
   Client: {"jsonrpc": "2.0", "method": "notifications/initialized"}
+  Client: {"jsonrpc": "2.0", "method": "roots/list", "result": {"roots": [{"uri": "users://test", "name": "Test Root"}]}, "id": "s1"}
   Client: {"jsonrpc": "2.0", "method": "tools/list", "id": 2}
   Server: {"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"greet","description":"Greet someone by name","inputSchema":{"type":"object","properties":{"name":{"type":"string","description":"Name to greet"}},"required":["name"]}},{"name":"nested_greet","description":"Greet someone by First and Last Name","inputSchema":{"type":"object","properties":{"person":{"type":"object","properties":{"first_name":{"type":"string","description":"First name"},"last_name":{"type":"string","description":"Last name"}},"required":[],"description":"Person to greet"}},"required":["person"]}},{"name":"group_greeting","description":"Greet multiple people","inputSchema":{"type":"object","properties":{"people":{"type":"array","description":"People to greet","items":{"type":"string"}}},"required":["people"]}}]}}
   Client: {"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "greet", "arguments": {"name": "World"}}, "id": 3}
@@ -16,3 +18,6 @@
   Server: {"jsonrpc":"2.0","id":7,"result":{"contents":[{"uri":"users://test","mimeType":"application/json","text":"Hello test!"}]}}
   Client: {"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "users://test/posts/3"}, "id": 9}
   Server: {"jsonrpc":"2.0","id":9,"result":{"contents":[{"uri":"users://test/posts/3","mimeType":"application/json","text":"Hello test! I see your post 3"}]}}
+  Client: {"jsonrpc": "2.0", "method": "notifications/roots/list_changed", "params": {}}
+  Server: {"jsonrpc":"2.0","id":"s2","method":"roots/list"}
+  Client: {"jsonrpc": "2.0", "method": "roots/list", "result": {"roots": [{"uri": "users://test", "name": "Test Root"}]}, "id": "s2"}

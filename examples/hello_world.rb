@@ -65,3 +65,13 @@ resource_template "users://{user_name}/posts/{post_id}" do
     "Hello #{user_name}! I see your post #{post_id}"
   end
 end
+
+# Defining the roots handler will allow the server to request roots
+# from capable clients. If available, they will be requested after
+# initialization and each time the client notifies about a change.
+roots do |roots|
+  # This handler will be called with all the roots and evaluated
+  # in the context of the App instance each time the roots change.
+  # e.g. [{ uri: "hello://world", name: "root path" }]
+  "Received updated roots: #{roots.inspect}"
+end

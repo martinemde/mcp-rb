@@ -10,6 +10,6 @@ module MCP
       end
     end
 
-    delegate :name, :version, :resource, :resource_template, :tool
+    delegate :name, :version, :resource, :resource_template, :tool, :roots
   end
 end

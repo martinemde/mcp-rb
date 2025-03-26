@@ -3,12 +3,14 @@
 require_relative "app/resource"
 require_relative "app/resource_template"
 require_relative "app/tool"
+require_relative "app/roots"
 
 module MCP
   class App
     include Resource
     include ResourceTemplate
     include Tool
+    include Roots
 
     class << self
       def name(value = nil)
@@ -30,6 +32,7 @@ module MCP
         @tools = nil
         @resources = nil
         @resource_templates = nil
+        @root_changed_handler = nil
       end
     end
 
