@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
 
   # For JSON Schema validation
-  spec.add_runtime_dependency "json_schemer"
+  spec.add_dependency "json_schemer"
 
   # Specify which files should be added to the gem when it is released.
   spec.files = Dir.glob(%w[
