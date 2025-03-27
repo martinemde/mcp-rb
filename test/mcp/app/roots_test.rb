@@ -19,7 +19,7 @@ module MCP
 
       def test_register_roots_handler
         # Initially no handler should be registered
-        assert_nil @app.root_changed_handler
+        assert_nil @app.roots_handler
 
         # Register a handler
         called = false
@@ -31,7 +31,7 @@ module MCP
         end
 
         # Handler should be registered
-        assert @app.root_changed_handler
+        assert @app.roots_handler
 
         # Call the handler with test data
         test_data = [{ uri: "file:///test/path", name: "Test Root" }]
@@ -54,13 +54,13 @@ module MCP
         end
 
         # Verify handler is registered
-        refute_nil @app.root_changed_handler
+        refute_nil @app.roots_handler
 
         # Reset the app
         TestApp.reset!
 
         # Handler should be cleared
-        assert_nil @app.root_changed_handler
+        assert_nil @app.roots_handler
       end
     end
   end

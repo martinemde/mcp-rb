@@ -140,7 +140,7 @@ module MCP
       end
 
       @client_capabilities = request.dig(:params, :capabilities) || {}
-      @should_request_roots = @client_capabilities.dig(:roots, :listChanged) && root_changed_handler?
+      @should_request_roots = @client_capabilities.dig(:roots, :listChanged) && roots_handler?
 
       {
         jsonrpc: MCP::Constants::JSON_RPC_VERSION,
@@ -240,19 +240,19 @@ module MCP
       end
     end
 
-    def root_changed_handler?
-      @app.respond_to?(:root_changed_handler) && @app.root_changed_handler
+    def roots_handler?
+      @app.respond_to?(:roots_handler) && @app.roots_handler
     end
 
     def handle_roots_list_changed_notification(_message)
-      return nil unless root_changed_handler?
+      return nil unless roots_handler?
 
       @should_request_roots = false
       server_request(Constants::RequestMethods::ROOTS_LIST)
     end
 
     def handle_roots_list_response(response)
-      return nil unless root_changed_handler?
+      return nil unless roots_handler?
 
       roots = response.dig(:result, :roots)
       @app.root_changed(roots)

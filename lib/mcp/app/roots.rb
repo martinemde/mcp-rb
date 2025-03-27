@@ -10,15 +10,15 @@ module MCP
 
       module ClassMethods
         def roots(&block)
-          @root_changed_handler = block
+          @roots_handler = block
         end
 
-        def root_changed_handler
-          @root_changed_handler
+        def roots_handler
+          @roots_handler
         end
 
         def reset!
-          @root_changed_handler = nil
+          @roots_handler = nil
         end
       end
 
@@ -26,14 +26,18 @@ module MCP
         @roots ||= []
       end
 
-      def root_changed_handler
-        self.class.root_changed_handler
+      def roots_handler
+        self.class.roots_handler
+      end
+
+      def roots_handler?
+        !roots_handler.nil?
       end
 
       def root_changed(new_roots)
         @roots = new_roots
         # is this the right way to evaluate with the app context??
-        instance_exec(new_roots, &root_changed_handler)
+        instance_exec(new_roots, &roots_handler)
       end
     end
   end

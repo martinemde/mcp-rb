@@ -32,7 +32,7 @@ module MCP
         @tools = nil
         @resources = nil
         @resource_templates = nil
-        @root_changed_handler = nil
+        @roots_handler = nil
       end
     end
 
