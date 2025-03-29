@@ -11,13 +11,19 @@ module MCP
       /<internal:/,                                       # internal in ruby >= 1.9.2
       %r{zeitwerk/(core_ext/)?kernel\.rb}                 # Zeitwerk kernel#require decorator
     ].freeze
+    
+    # returns true if the program started from the same file that required mcp.
+    def app_file?(call_stack)
+      requiring_file = cleaned_caller(call_stack, 1).flatten.first
+      File.expand_path($PROGRAM_NAME) == File.expand_path(requiring_file)
+    end
 
     def callers_to_ignore
       CALLERS_TO_IGNORE
     end
 
-    def cleaned_caller(keep = 3)
-      caller(1)
+    def cleaned_caller(call_stack = caller(1), keep = 3)
+      call_stack
         .map! { |line| line.split(/:(?=\d|in )/, 3)[0, keep] }
         .reject { |file, *_| callers_to_ignore.any? { |pattern| file =~ pattern } }
     end
