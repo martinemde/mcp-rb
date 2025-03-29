@@ -87,7 +87,8 @@ Any capabilities are not supported yet.
 ## Testing
 
 ```bash
-ruby -Ilib:test -e "Dir.glob('./test/**/*_test.rb').each { |f| require f }"
+rake test
+rake test:unit # run only the unit tests, skipping tests that test a running server
 ```
 
 Test with MCP Inspector
@@ -100,6 +101,13 @@ bunx @modelcontextprotocol/inspector $(pwd)/examples/hello_world.rb
 
 ```bash
 bundle exec standardrb --fix
+```
+
+You can also use rake tasks:
+
+```bash
+rake lint      # Run standardrb to check code style
+rake lint:fix  # Auto-fix standardrb issues
 ```
 
 ## Release
