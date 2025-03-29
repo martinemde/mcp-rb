@@ -22,6 +22,10 @@ module MCP
     def run?
       File.expand_path($PROGRAM_NAME) == File.expand_path(@app_file) && $ERROR_INFO.nil? && $stdin.stat.readable?
     end
+
+    def run?
+      File.expand_path($PROGRAM_NAME) == File.expand_path(@app_file) && $ERROR_INFO.nil? && $stdin.stat.readable?
+    end
   end
 
   # require 'mcp' したファイルで最後に到達したら実行されるようにするため
