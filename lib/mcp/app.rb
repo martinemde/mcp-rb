@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "app/lifecycle"
 require_relative "app/resource"
 require_relative "app/resource_template"
 require_relative "app/tool"
@@ -11,6 +12,7 @@ module MCP
     include ResourceTemplate
     include Tool
     include Roots
+    include Lifecycle
 
     class << self
       def name(value = nil)

@@ -21,6 +21,7 @@ module MCP
       @client_capabilities = {}
       @request_id_counter = 0
       @awaiting_responses = {}
+      @app.boot
     end
 
     def name
@@ -139,7 +140,9 @@ module MCP
         )
       end
 
-      @client_capabilities = request.dig(:params, :capabilities) || {}
+      @client_params = request[:params] || {}
+      @app.initialize_client(@client_params)
+      @client_capabilities = @client_params[:capabilities] || {}
       @should_request_roots = @client_capabilities.dig(:roots, :listChanged) && roots_handler?
 
       {
@@ -167,6 +170,7 @@ module MCP
     def handle_initialized(request)
       return error_response(request[:id], Constants::ErrorCodes::ALREADY_INITIALIZED, "Server already initialized") if @initialized
 
+      @app.client_initialized(@client_params)
       @initialized = true
       nil # 通知に対しては応答を返さない (No response for notifications)
     end

@@ -10,6 +10,6 @@ module MCP
       end
     end
 
-    delegate :name, :version, :resource, :resource_template, :tool, :roots
+    delegate :name, :version, :resource, :resource_template, :tool, :roots, :boot, :initialize_client, :client_initialized
   end
 end
