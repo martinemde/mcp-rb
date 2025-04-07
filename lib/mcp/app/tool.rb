@@ -143,7 +143,7 @@ module MCP
         validate_arguments(tool[:input_schema], args)
         {content: [{type: "text", text: tool[:handler].call(args).to_s}], isError: false}
       rescue => e
-        {content: [{type: "text", text: "Error: #{e.message}"}], isError: true}
+        {content: [{type: "text", text: "Error: #{e.message}\nBacktrace: #{e.backtrace.join("\n")}"}], isError: true}
       end
 
       private
